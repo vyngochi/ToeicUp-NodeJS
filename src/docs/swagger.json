@@ -102,6 +102,34 @@
           }
         }
       }
+    },
+    "/api/auth/google": {
+      "post": {
+        "summary": "Đăng nhập bằng Google",
+        "description": "Xác thực người dùng bằng Google idToken",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GoogleLoginSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
     }
   },
 
@@ -121,6 +149,16 @@
         "properties": {
           "email": { "type": "string" },
           "password": { "type": "string" }
+        }
+      },
+      "GoogleLoginRequest": {
+        "type": "object",
+        "required": ["idToken"],
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
+          }
         }
       },
 
@@ -279,6 +317,36 @@
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/RefreshResponseData"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "GoogleLoginSuccess": {
+        "description": "Đăng nhập Google thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/BaseSuccess"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string",
+                          "example": "access-token"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
                     }
                   }
                 }

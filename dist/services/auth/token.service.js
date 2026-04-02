@@ -73,7 +73,7 @@ exports.tokenService = {
         });
         if (!record)
             throw new Error("Invalid Token");
-        if (!record.RevokedAt) {
+        if (record.RevokedAt) {
             await prisma_1.prisma.refresh_tokens.updateMany({
                 where: { UserId: record.UserId },
                 data: {
@@ -98,7 +98,15 @@ exports.tokenService = {
         return {
             accessToken,
             refreshToken: newRefresh.Token,
-            user: record.users,
+            user: {
+                id: record.users.Id,
+                email: record.users.Email,
+                displayName: record.users.DisplayName,
+                targetScore: record.users.TargetScore,
+                streak: record.users.Streak,
+                avatarUrl: record.users.AvatarUrl,
+                wordsPerDay: record.users.WordsPerDay,
+            },
         };
     },
     async blackListAccessToken(token) {

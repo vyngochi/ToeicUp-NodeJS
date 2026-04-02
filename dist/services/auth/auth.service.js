@@ -10,6 +10,7 @@ const prisma_1 = require("../../config/prisma");
 const error_handler_1 = require("../../middlewares/error-handler");
 const token_service_1 = require("./token.service");
 const mail_service_1 = require("../mail/mail.service");
+const google_service_1 = require("./google.service");
 exports.authService = {
     //register service
     async register(data) {
@@ -80,5 +81,95 @@ exports.authService = {
             where: { Token: refreshToken },
             data: { RevokedAt: new Date(), RevokedReason: "Logout" },
         });
+    },
+    //refresh token
+    async refresh(token, deviceInfo, ip) {
+        if (!token) {
+            throw new error_handler_1.AppError(401, "Không tìm thấy refresh token");
+        }
+        try {
+            const { accessToken, refreshToken, user } = await token_service_1.tokenService.rotateRefreshToken(token, deviceInfo, ip);
+            return { accessToken, refreshToken, user };
+        }
+        catch (error) {
+            if (error.message === "Reused detected") {
+                throw new error_handler_1.AppError(401, "Phiên đăng nhập không hợp lệ! Vui lòng đăng nhập lại");
+            }
+            if (["Invalid Token", "Token reused"].includes(error.message)) {
+                throw new error_handler_1.AppError(401, "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+            }
+        }
+    },
+    //login with google
+    async loginWithGG(idToken, deviceInfo, ip) {
+        try {
+            if (!idToken) {
+                throw new error_handler_1.AppError(400, "Token không hợp lệ");
+            }
+            const payload = await (0, google_service_1.verifyGoogleToken)(idToken);
+            const { email, name, picture, sub } = payload;
+            let user = await prisma_1.prisma.users.findUnique({ where: { Email: email } });
+            let externalLogin = await prisma_1.prisma.external_logins.findFirst({
+                where: {
+                    Provider: "Google",
+                    ProviderKey: sub,
+                },
+            });
+            const userId = crypto_1.default.randomUUID();
+            const createdAt = new Date();
+            if (!user) {
+                await prisma_1.prisma.$transaction(async (tx) => {
+                    user = await tx.users.create({
+                        data: {
+                            Id: userId,
+                            Email: email,
+                            DisplayName: name,
+                            AvatarUrl: picture,
+                            CreatedAt: createdAt,
+                            IsActive: true,
+                        },
+                    });
+                    await tx.external_logins.create({
+                        data: {
+                            Id: crypto_1.default.randomUUID(),
+                            UserId: userId,
+                            Email: email,
+                            DisplayName: name,
+                            AvatarUrl: picture,
+                            Provider: "Google",
+                            ProviderKey: sub,
+                            CreatedAt: createdAt,
+                        },
+                    });
+                });
+            }
+            else if (!externalLogin) {
+                await prisma_1.prisma.external_logins.create({
+                    data: {
+                        Id: crypto_1.default.randomUUID(),
+                        UserId: user.Id,
+                        Email: email,
+                        DisplayName: name,
+                        AvatarUrl: picture,
+                        Provider: "Google",
+                        ProviderKey: sub,
+                        CreatedAt: createdAt,
+                    },
+                });
+            }
+            if (!user) {
+                throw new error_handler_1.AppError(400, "Login không thành công, vui lòng thử lại");
+            }
+            const accessToken = token_service_1.tokenService.signAccessToken(user.Id, user.Email, user.Role);
+            const refreshToken = token_service_1.tokenService.createRefreshToken(user.Id, deviceInfo, ip);
+            return {
+                accessToken,
+                refreshToken,
+                user,
+            };
+        }
+        catch (error) {
+            throw new error_handler_1.AppError(400, error.message);
+        }
     },
 };

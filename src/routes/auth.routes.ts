@@ -4,6 +4,7 @@ import { authenticate } from "../middlewares/authenticate";
 import { authSchema } from "../schemas/auth.schema";
 import {
   loginController,
+  loginWithGGController,
   logoutController,
   refreshController,
   registerController,
@@ -23,6 +24,7 @@ router.post(
   limiter(15, 10),
   loginController,
 );
+router.post("/google", limiter(15, 10), loginWithGGController);
 router.post("/refresh", authenticate, limiter(15, 10), refreshController);
 router.post("/logout", authenticate, logoutController);
 

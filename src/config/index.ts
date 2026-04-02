@@ -22,4 +22,7 @@ export const config = {
     user: process.env.MAIL_NAME,
     pass: process.env.MAIL_PASS,
   },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+  },
 };
