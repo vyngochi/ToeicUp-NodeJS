@@ -5,3 +5,8 @@ node_modules
 /src/generated/prisma
 
 VocabToeic_Express_Setup.md
+
+/dist
+
+/prisma/schema.prisma
+
