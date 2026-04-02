@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = exports.AppError = void 0;
-const responseHelper_1 = require("@app/libs/responseHelper");
+const responseHelper_1 = require("./../libs/responseHelper");
 class AppError extends Error {
     constructor(statusCode, message) {
         super(message);

@@ -9,6 +9,7 @@ const prisma_1 = require("./config/prisma");
 const config_1 = require("./config");
 app_1.default.listen(config_1.config.port, () => {
     console.log(`Server is running at port: ${config_1.config.port}`);
+    console.log("😍 Swagger API: " + `http://localhost:${config_1.config.port}/api-docs`);
 });
 redis_1.redis.ping().then(() => console.log("Redis connected"));
 process.on("SIGTERM", async () => {

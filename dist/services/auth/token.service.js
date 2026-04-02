@@ -37,22 +37,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tokenService = void 0;
-const config_1 = require("@app/config");
+const index_1 = require("../../config/index");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto = __importStar(require("crypto"));
-const prisma_1 = require("@app/config/prisma");
-const redis_1 = require("@app/config/redis");
+const prisma_1 = require("../../config/prisma");
+const redis_1 = require("../../config/redis");
 exports.tokenService = {
     signAccessToken(userId, email, role) {
         const jti = crypto.randomUUID();
-        const token = jsonwebtoken_1.default.sign({ userId: userId, email, role, jti }, config_1.config.jwt.secret, { expiresIn: "5m" });
+        const token = jsonwebtoken_1.default.sign({ userId: userId, email, role, jti }, index_1.config.jwt.secret, { expiresIn: "5m" });
         return { token, jti };
     },
     async createRefreshToken(userId, deviceInfo, ip) {
         const token = crypto.randomBytes(64).toString("hex");
         const now = new Date();
         const expiredAt = now;
-        expiredAt.setDate(expiredAt.getDate() + config_1.config.jwt.refreshDays);
+        expiredAt.setDate(expiredAt.getDate() + index_1.config.jwt.refreshDays);
         const record = await prisma_1.prisma.refresh_tokens.create({
             data: {
                 Id: crypto.randomUUID(),
@@ -101,7 +101,12 @@ exports.tokenService = {
             user: record.users,
         };
     },
-    async blackListAccessToken(jti, ttlSeconds) {
-        await redis_1.redis.setex(`blacklist:${jti}`, ttlSeconds, "1");
+    async blackListAccessToken(token) {
+        const decoded = jsonwebtoken_1.default.verify(token, index_1.config.jwt.secret);
+        const now = Math.floor(Date.now() / 1000);
+        const ttl = decoded.exp - now;
+        if (ttl > 0) {
+            await redis_1.redis.setex(`blacklist:${decoded.jti}`, ttl, "1");
+        }
     },
 };

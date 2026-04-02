@@ -1,0 +1,234 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Toeic Up",
+        "version": "1.0.0",
+        "description": "API hệ thống học từ vựng và luyện thi TOEIC Reading"
+    },
+    "paths": {
+        "/api/auth/login": {
+            "post": {
+                "summary": "Login",
+                "description": "Login into the system",
+                "tags": ["Auth"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "summary": "Logout",
+                "description": "Logout from the system",
+                "tags": ["Auth"],
+                "security": [
+                    {
+                        "Authentication": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {}
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LogoutResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/register": {
+            "post": {
+                "summary": "Đăng ký tài khoản",
+                "description": "Tạo tài khoản mới và gửi email xác thực",
+                "tags": ["Auth"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "confirmPassword",
+                                    "fullName",
+                                    "targetScore",
+                                    "wordsPerDay"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "test@gmail.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Abc123@"
+                                    },
+                                    "confirmPassword": {
+                                        "type": "string",
+                                        "example": "Abc123@"
+                                    },
+                                    "fullName": {
+                                        "type": "string",
+                                        "example": "Nguyen Van A"
+                                    },
+                                    "targetScore": {
+                                        "type": "integer",
+                                        "example": 750
+                                    },
+                                    "wordsPerDay": {
+                                        "type": "integer",
+                                        "example": 20
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Đăng ký thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Email đã tồn tại",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tài khoản đã tồn tại trong hệ thống"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "Authentication": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "email": { "type": "string" },
+                    "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+            },
+            "LoginResponse": {
+                "type": "object",
+                "properties": {
+                    "accessToken": { "type": "string", "example": "string" },
+                    "expiresIn": { "type": "number", "example": "0" },
+                    "rawRefreshToken": { "type": "string", "example": "string" },
+                    "user": {
+                        "type": "object",
+                        "properties": {
+                            "id": { "type": "string", "example": "string" },
+                            "email": { "type": "string", "example": "string" },
+                            "displayName": { "type": "string", "example": "string" },
+                            "targetScore": { "type": "number", "example": "450" },
+                            "streak": { "type": "number", "example": "0" },
+                            "avatarUrl": { "type": "string", "example": "string" },
+                            "wordsPerDay": { "type": "number", "example": "5" }
+                        }
+                    }
+                }
+            },
+            "LoginErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "statusCode": { "type": "number", "example": "400" },
+                    "message": { "type": "string", "example": "Login khong thanh cong" },
+                    "errors": { "type": "object", "example": "" }
+                }
+            },
+            "LogoutResponse": {
+                "type": "object",
+                "properties": {
+                    "statusCode": { "type": "number", "example": "200" },
+                    "message": { "type": "string", "example": "Logout thanh cong" },
+                    "data": { "type": "object", "example": "null" }
+                }
+            }
+        }
+    }
+}

@@ -1,29 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const login_controller_1 = require("@app/controllers/auth/login.controller");
-const authenticate_1 = require("@app/middlewares/authenticate");
+const login_controller_1 = require("../controllers/auth/login.controller");
 const express_1 = require("express");
+const validate_1 = require("../middlewares/validate");
+const authenticate_1 = require("../middlewares/authenticate");
+const logout_controller_1 = require("../controllers/auth/logout.controller");
+const register_controller_1 = require("../controllers/auth/register.controller");
+const auth_schema_1 = require("../schemas/auth.schema");
 const router = (0, express_1.Router)();
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Success
- */
-router.post("/login", authenticate_1.authenticate, login_controller_1.loginController);
+router.post("/register", (0, validate_1.validate)(auth_schema_1.authSchema.registerSchema), (0, validate_1.limiter)(5, 10), register_controller_1.registerController);
+router.post("/login", (0, validate_1.validate)(auth_schema_1.authSchema.loginSchema), (0, validate_1.limiter)(15, 10), login_controller_1.loginController);
+router.post("/logout", authenticate_1.authenticate, logout_controller_1.logoutController);
 exports.default = router;
