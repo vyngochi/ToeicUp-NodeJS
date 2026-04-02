@@ -1,10 +1,13 @@
-import { loginController } from "../controllers/auth/login.controller";
 import { Router } from "express";
 import { limiter, validate } from "../middlewares/validate";
 import { authenticate } from "../middlewares/authenticate";
-import { logoutController } from "../controllers/auth/logout.controller";
-import { registerController } from "../controllers/auth/register.controller";
 import { authSchema } from "../schemas/auth.schema";
+import {
+  loginController,
+  logoutController,
+  refreshController,
+  registerController,
+} from "../controllers/auth";
 
 const router = Router();
 
@@ -20,6 +23,7 @@ router.post(
   limiter(15, 10),
   loginController,
 );
+router.post("/refresh", authenticate, limiter(15, 10), refreshController);
 router.post("/logout", authenticate, logoutController);
 
 export default router;
