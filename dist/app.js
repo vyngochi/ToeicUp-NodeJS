@@ -23,6 +23,6 @@ app.get("/", (_req, res) => {
 app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_json_1.default));
 //Routes
 app.use("/api", index_1.default);
-app.get("health", (_req, _res) => _res.json({ status: "ok" }));
+app.get("/health", (_req, _res) => _res.json({ status: "ok" }));
 app.use(error_handler_1.errorHandler);
 exports.default = app;

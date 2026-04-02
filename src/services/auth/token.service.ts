@@ -44,7 +44,7 @@ export const tokenService = {
 
     if (!record) throw new Error("Invalid Token");
 
-    if (!record.RevokedAt) {
+    if (record.RevokedAt) {
       await prisma.refresh_tokens.updateMany({
         where: { UserId: record.UserId },
         data: {
@@ -82,7 +82,15 @@ export const tokenService = {
     return {
       accessToken,
       refreshToken: newRefresh.Token,
-      user: record.users,
+      user: {
+        id: record.users.Id,
+        email: record.users.Email,
+        displayName: record.users.DisplayName,
+        targetScore: record.users.TargetScore,
+        streak: record.users.Streak,
+        avatarUrl: record.users.AvatarUrl,
+        wordsPerDay: record.users.WordsPerDay,
+      },
     };
   },
 

@@ -113,4 +113,33 @@ export const authService = {
       data: { RevokedAt: new Date(), RevokedReason: "Logout" },
     });
   },
+
+  async refresh(token: string, deviceInfo?: string, ip?: string) {
+    if (!token) {
+      throw new AppError(401, "Không tìm thấy refresh token");
+    }
+
+    try {
+      const { accessToken, refreshToken, user } =
+        await tokenService.rotateRefreshToken(token, deviceInfo, ip);
+
+      return { accessToken, refreshToken, user };
+    } catch (error) {
+      if ((error as Error).message === "Reused detected") {
+        throw new AppError(
+          401,
+          "Phiên đăng nhập không hợp lệ! Vui lòng đăng nhập lại",
+        );
+      }
+
+      if (
+        ["Invalid Token", "Token reused"].includes((error as Error).message)
+      ) {
+        throw new AppError(
+          401,
+          "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại",
+        );
+      }
+    }
+  },
 };
