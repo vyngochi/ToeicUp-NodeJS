@@ -26,7 +26,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 //Routes
 app.use("/api", routes);
 
-app.get("health", (_req, _res) => _res.json({ status: "ok" }));
+app.get("/health", (_req, _res) => _res.json({ status: "ok" }));
 
 app.use(errorHandler);
 
