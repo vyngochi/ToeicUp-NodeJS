@@ -6,6 +6,6 @@ node_modules
 
 VocabToeic_Express_Setup.md
 
-/dist
+dist/
 
 /prisma/schema.prisma
