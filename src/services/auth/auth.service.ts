@@ -4,6 +4,7 @@ import { prisma } from "../../config/prisma";
 import { AppError } from "../../middlewares/error-handler";
 import { tokenService } from "./token.service";
 import { mailService } from "../mail/mail.service";
+import { verifyGoogleToken } from "./google.service";
 
 export const authService = {
   //register service
@@ -114,6 +115,7 @@ export const authService = {
     });
   },
 
+  //refresh token
   async refresh(token: string, deviceInfo?: string, ip?: string) {
     if (!token) {
       throw new AppError(401, "Không tìm thấy refresh token");
@@ -140,6 +142,94 @@ export const authService = {
           "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại",
         );
       }
+    }
+  },
+
+  //login with google
+  async loginWithGG(idToken: string, deviceInfo?: string, ip?: string) {
+    try {
+      if (!idToken) {
+        throw new AppError(400, "Token không hợp lệ");
+      }
+      const payload = await verifyGoogleToken(idToken);
+
+      const { email, name, picture, sub } = payload;
+
+      let user = await prisma.users.findUnique({ where: { Email: email } });
+      let externalLogin = await prisma.external_logins.findFirst({
+        where: {
+          Provider: "Google",
+          ProviderKey: sub,
+        },
+      });
+
+      const userId = crypto.randomUUID();
+      const createdAt = new Date();
+
+      if (!user) {
+        await prisma.$transaction(async (tx) => {
+          user = await tx.users.create({
+            data: {
+              Id: userId,
+              Email: email!,
+              DisplayName: name!,
+              AvatarUrl: picture!,
+              CreatedAt: createdAt,
+              IsActive: true,
+            },
+          });
+
+          await tx.external_logins.create({
+            data: {
+              Id: crypto.randomUUID(),
+              UserId: userId,
+              Email: email!,
+              DisplayName: name!,
+              AvatarUrl: picture!,
+              Provider: "Google",
+              ProviderKey: sub,
+              CreatedAt: createdAt,
+            },
+          });
+        });
+      } else if (!externalLogin) {
+        await prisma.external_logins.create({
+          data: {
+            Id: crypto.randomUUID(),
+            UserId: user.Id,
+            Email: email!,
+            DisplayName: name!,
+            AvatarUrl: picture!,
+            Provider: "Google",
+            ProviderKey: sub,
+            CreatedAt: createdAt,
+          },
+        });
+      }
+
+      if (!user) {
+        throw new AppError(400, "Login không thành công, vui lòng thử lại");
+      }
+
+      const accessToken = tokenService.signAccessToken(
+        user.Id,
+        user.Email,
+        user.Role,
+      );
+
+      const refreshToken = tokenService.createRefreshToken(
+        user.Id,
+        deviceInfo,
+        ip,
+      );
+
+      return {
+        accessToken,
+        refreshToken,
+        user,
+      };
+    } catch (error) {
+      throw new AppError(400, (error as Error).message);
     }
   },
 };
