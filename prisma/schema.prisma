@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model EFMigrationsHistory {
+  MigrationId    String @id(map: "PK___EFMigrationsHistory") @db.VarChar(150)
+  ProductVersion String @db.VarChar(32)
+
+  @@map("__EFMigrationsHistory")
+}
+
+model exercise_results {
+  Id             String    @id(map: "PK_exercise_results") @db.Uuid
+  UserId         String    @db.Uuid
+  ExerciseId     String    @db.Uuid
+  Score          Int
+  TotalQuestions Int
+  TimeTakenSec   Int
+  Answers        Json
+  CompletedAt    DateTime  @db.Timestamptz(6)
+  CreatedAt      DateTime  @db.Timestamptz(6)
+  UpdatedAt      DateTime? @db.Timestamptz(6)
+  exercises      exercises @relation(fields: [ExerciseId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_exercise_results_exercises_ExerciseId")
+  users          users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_exercise_results_users_UserId")
+
+  @@index([ExerciseId], map: "IX_exercise_results_ExerciseId")
+  @@index([UserId, CompletedAt], map: "IX_exercise_results_UserId_CompletedAt")
+}
+
+model exercises {
+  Id                   String                 @id(map: "PK_exercises") @db.Uuid
+  Part                 Int
+  Topic                String                 @db.VarChar(50)
+  Difficulty           Int                    @default(1)
+  IsAiGenerated        Boolean                @default(true)
+  CreatedAt            DateTime               @db.Timestamptz(6)
+  UpdatedAt            DateTime?              @db.Timestamptz(6)
+  listening_content    Json?
+  reading_content      Json?
+  exercise_results     exercise_results[]
+  listening_progresses listening_progresses[]
+}
+
+model external_logins {
+  Id          String    @id(map: "PK_external_logins") @db.Uuid
+  UserId      String    @db.Uuid
+  Provider    String    @db.VarChar(20)
+  ProviderKey String    @db.VarChar(256)
+  Email       String
+  DisplayName String?   @db.VarChar(100)
+  AvatarUrl   String?   @db.VarChar(500)
+  CreatedAt   DateTime  @db.Timestamptz(6)
+  UpdatedAt   DateTime? @db.Timestamptz(6)
+  users       users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_external_logins_users_UserId")
+
+  @@unique([Provider, ProviderKey], map: "IX_external_logins_Provider_ProviderKey")
+  @@index([UserId], map: "IX_external_logins_UserId")
+}
+
+model listening_progresses {
+  Id             String    @id(map: "PK_listening_progresses") @db.Uuid
+  UserId         String    @db.Uuid
+  ExerciseId     String    @db.Uuid
+  ListenedCount  Int       @default(0)
+  LastListenedAt DateTime? @db.Timestamptz(6)
+  IsCompleted    Boolean   @default(false)
+  CreatedAt      DateTime  @db.Timestamptz(6)
+  UpdatedAt      DateTime? @db.Timestamptz(6)
+  exercises      exercises @relation(fields: [ExerciseId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_listening_progresses_exercises_ExerciseId")
+  users          users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_listening_progresses_users_UserId")
+
+  @@unique([UserId, ExerciseId], map: "IX_listening_progresses_UserId_ExerciseId")
+  @@index([ExerciseId], map: "IX_listening_progresses_ExerciseId")
+  @@index([UserId], map: "IX_listening_progresses_UserId")
+}
+
+model refresh_tokens {
+  Id            String    @id(map: "PK_refresh_tokens") @db.Uuid
+  UserId        String    @db.Uuid
+  Token         String    @unique(map: "IX_refresh_tokens_Token")
+  DeviceInfo    String?   @db.VarChar(256)
+  IpAddress     String?   @db.VarChar(45)
+  ExpiresAt     DateTime  @db.Timestamptz(6)
+  RevokedAt     DateTime? @db.Timestamptz(6)
+  RevokedReason String?   @db.VarChar(100)
+  CreatedAt     DateTime  @db.Timestamptz(6)
+  UpdatedAt     DateTime? @db.Timestamptz(6)
+  users         users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_refresh_tokens_users_UserId")
+
+  @@index([UserId, ExpiresAt], map: "IX_refresh_tokens_UserId_ExpiresAt")
+}
+
+model study_sessions {
+  Id            String    @id(map: "PK_study_sessions") @db.Uuid
+  UserId        String    @db.Uuid
+  StartedAt     DateTime  @db.Timestamptz(6)
+  EndedAt       DateTime? @db.Timestamptz(6)
+  WordsReviewed Int       @default(0)
+  ExercisesDone Int       @default(0)
+  CreatedAt     DateTime  @db.Timestamptz(6)
+  UpdatedAt     DateTime? @db.Timestamptz(6)
+  users         users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_study_sessions_users_UserId")
+
+  @@index([UserId, StartedAt], map: "IX_study_sessions_UserId_StartedAt")
+}
+
+model user_word_progresses {
+  Id             String    @id(map: "PK_user_word_progresses") @db.Uuid
+  UserId         String    @db.Uuid
+  WordId         String    @db.Uuid
+  Status         String    @db.VarChar(20)
+  EaseFactor     Float     @default(2.5)
+  IntervalDays   Int       @default(1)
+  NextReviewAt   DateTime? @db.Timestamptz(6)
+  CorrectCount   Int       @default(0)
+  IncorrectCount Int       @default(0)
+  LastSeenAt     DateTime? @db.Timestamptz(6)
+  CreatedAt      DateTime  @db.Timestamptz(6)
+  UpdatedAt      DateTime? @db.Timestamptz(6)
+  users          users     @relation(fields: [UserId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_word_progresses_users_UserId")
+  words          words     @relation(fields: [WordId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_word_progresses_words_WordId")
+
+  @@unique([UserId, WordId], map: "IX_user_word_progresses_UserId_WordId")
+  @@index([UserId, NextReviewAt], map: "IX_user_word_progresses_UserId_NextReviewAt")
+  @@index([WordId], map: "IX_user_word_progresses_WordId")
+}
+
+model users {
+  Id                         String                 @id(map: "PK_users") @db.Uuid
+  Email                      String                 @unique(map: "IX_users_Email") @db.VarChar(256)
+  PasswordHash               String?                @db.VarChar(60)
+  DisplayName                String                 @db.VarChar(100)
+  Role                       String                 @default("User") @db.VarChar(20)
+  TargetScore                Int?
+  Streak                     Int                    @default(0)
+  IsActive                   Boolean                @default(true)
+  LastStudyDate              DateTime?              @db.Timestamptz(6)
+  CreatedAt                  DateTime               @db.Timestamptz(6)
+  UpdatedAt                  DateTime?              @db.Timestamptz(6)
+  AvatarUrl                  String?                @db.VarChar(500)
+  EmailVerificationExpiresAt DateTime?              @db.Timestamptz(6)
+  EmailVerificationToken     String?
+  EmailVerified              Boolean                @default(false)
+  PasswordResetExpiresAt     DateTime?              @db.Timestamptz(6)
+  PasswordResetToken         String?
+  WordsPerDay                Int?
+  exercise_results           exercise_results[]
+  external_logins            external_logins[]
+  listening_progresses       listening_progresses[]
+  refresh_tokens             refresh_tokens[]
+  study_sessions             study_sessions[]
+  user_word_progresses       user_word_progresses[]
+}
+
+model word_definitions {
+  Id           String    @id(map: "PK_word_definitions") @db.Uuid
+  WordId       String    @db.Uuid
+  DefinitionEn String
+  DefinitionVi String
+  ExampleEn    String?
+  ExampleVi    String?
+  Tips         String?
+  SortOrder    Int       @default(0)
+  CreatedAt    DateTime  @db.Timestamptz(6)
+  UpdatedAt    DateTime? @db.Timestamptz(6)
+  PartOfSpeech String?   @db.VarChar(20)
+  words        words     @relation(fields: [WordId], references: [Id], onDelete: Cascade, onUpdate: NoAction, map: "FK_word_definitions_words_WordId")
+
+  @@index([WordId], map: "IX_word_definitions_WordId")
+}
+
+model words {
+  Id                   String                 @id(map: "PK_words") @db.Uuid
+  Term                 String                 @unique(map: "IX_words_Term") @db.VarChar(100)
+  Phonetic             String?                @db.VarChar(100)
+  AudioUrl             String?
+  Topic                String                 @db.VarChar(50)
+  Level                Int                    @default(1)
+  CreatedAt            DateTime               @db.Timestamptz(6)
+  UpdatedAt            DateTime?              @db.Timestamptz(6)
+  user_word_progresses user_word_progresses[]
+  word_definitions     word_definitions[]
+}
