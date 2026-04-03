@@ -7,5 +7,3 @@ node_modules
 VocabToeic_Express_Setup.md
 
 dist/
-
-prisma/schema.prisma

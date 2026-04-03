@@ -16,6 +16,7 @@ export const logoutController = async (
     const { message } = await authService.logout(token, refreshToken);
 
     successResponse(res.clearCookie(REFRESH_COOKIE), 200, message);
+    next();
   } catch (error) {
     next(error);
   }
