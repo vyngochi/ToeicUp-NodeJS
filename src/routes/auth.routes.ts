@@ -8,7 +8,12 @@ import {
   logoutController,
   refreshController,
   registerController,
+  verifyRegisterEmail,
 } from "../controllers/auth";
+import {
+  forgotPasswordController,
+  resetPasswordForgotController,
+} from "../controllers/auth/forgot-password.controller";
 
 const router = Router();
 
@@ -18,6 +23,7 @@ router.post(
   limiter(5, 10),
   registerController,
 );
+router.post("/verify-email", limiter(15, 10), verifyRegisterEmail);
 router.post(
   "/login",
   validate(authSchema.loginSchema),
@@ -26,6 +32,18 @@ router.post(
 );
 router.post("/google", limiter(15, 10), loginWithGGController);
 router.post("/refresh", authenticate, limiter(15, 10), refreshController);
+router.post(
+  "/forgot-password",
+  validate(authSchema.forgotSchema),
+  limiter(15, 10),
+  forgotPasswordController,
+);
+router.post(
+  "/reset-password",
+  validate(authSchema.resetPasswordSchema),
+  limiter(15, 10),
+  resetPasswordForgotController,
+);
 router.post("/logout", authenticate, logoutController);
 
 export default router;

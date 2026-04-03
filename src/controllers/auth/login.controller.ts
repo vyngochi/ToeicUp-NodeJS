@@ -13,19 +13,12 @@ export const loginController = async (
     const deviceInfo = req.headers["user-agent"];
     const ip = req.ip;
 
-    const { accessToken, refreshToken, user } = await authService.login(
-      email,
-      password,
-      deviceInfo,
-      ip,
-    );
+    const { message, accessToken, refreshToken, user } =
+      await authService.login(email, password, deviceInfo, ip);
 
-    successResponse(
-      res.cookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTIONS),
-      200,
-      "Đăng nhập thành công",
-      { accessToken, refreshToken, user },
-    );
+    res.cookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTIONS);
+
+    successResponse(res, 200, message, { accessToken, user });
   } catch (error) {
     next(error);
   }

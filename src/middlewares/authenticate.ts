@@ -1,5 +1,6 @@
 import { config } from "../config/index";
 import { redis } from "../config/redis";
+import { blacklistToken } from "../libs/redisHelper";
 import { errorResponse } from "../libs/responseHelper";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
@@ -33,7 +34,7 @@ export const authenticate = async (
       jti: string;
     };
 
-    const blacklisted = await redis.get(`blacklist:${payload.jti}`);
+    const blacklisted = await blacklistToken.getBlacklist(payload.jti);
 
     if (blacklisted) {
       return errorResponse(res, 401, "Token revoked");
