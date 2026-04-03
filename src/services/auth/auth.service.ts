@@ -245,7 +245,7 @@ export const authService = {
   async forgotPassword(email: string) {
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
-    const verifyTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    const verifyTokenExpiry = new Date(Date.now() + (1 / 4) * 60 * 60 * 1000);
 
     try {
       const user = await prisma.users.findUnique({
