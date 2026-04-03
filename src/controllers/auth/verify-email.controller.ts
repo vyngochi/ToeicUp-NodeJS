@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { mailService } from "../../services/mail/mail.service";
 import { successResponse } from "../../libs/responseHelper";
+import { COOKIE_OPTIONS, REFRESH_COOKIE } from "../../constants/cookie";
 
 export const verifyRegisterEmail = async (
   req: Request,
@@ -8,19 +9,17 @@ export const verifyRegisterEmail = async (
   next: NextFunction,
 ) => {
   try {
-    const { token } = req.body;
+    const token = req.params.token as string;
     const deviceInfo = req.headers["user-agent"];
     const ip = req.ip;
 
-    const { accessToken, refreshToken, user } = await mailService.verifyEmail(
-      token,
-      deviceInfo,
-      ip,
-    );
+    const { message, accessToken, refreshToken, user } =
+      await mailService.verifyEmail(token, deviceInfo, ip);
 
-    successResponse(res, 200, "Tài khoản đã được xác thực", {
+    res.cookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTIONS);
+
+    successResponse(res, 200, message, {
       accessToken,
-      refreshToken,
       user,
     });
   } catch (error) {

@@ -6,6 +6,42 @@
     "description": "API hệ thống học từ vựng và luyện thi TOEIC Reading"
   },
   "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Đăng ký tài khoản",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/RegisterSuccess"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/auth/verify-email": {
+      "post": {
+        "summary": "Xác thực email",
+        "description": "Xác thực tài khoản bằng token gửi qua email (refreshToken được set qua cookie)",
+        "tags": ["Auth"],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VerifyEmailSuccess"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "summary": "Login",
@@ -55,31 +91,6 @@
       }
     },
 
-    "/api/auth/register": {
-      "post": {
-        "summary": "Đăng ký tài khoản",
-        "tags": ["Auth"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "$ref": "#/components/responses/RegisterSuccess"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          }
-        }
-      }
-    },
-
     "/api/auth/refresh": {
       "post": {
         "summary": "Làm mới access token",
@@ -121,6 +132,59 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/GoogleLoginSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "summary": "Quên mật khẩu",
+        "description": "Gửi email chứa link reset mật khẩu",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ForgotPasswordSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "summary": "Đặt lại mật khẩu",
+        "description": "Đặt lại mật khẩu bằng token gửi qua email",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ResetPasswordSuccess"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -213,6 +277,38 @@
           "refreshToken": { "type": "string" },
           "user": {
             "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["token", "password", "confirmPassword"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "abc123resetToken"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Abc123@"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "example": "Abc123@"
+          }
+        }
+      },
+
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "test@gmail.com"
           }
         }
       },
@@ -327,6 +423,68 @@
       },
       "GoogleLoginSuccess": {
         "description": "Đăng nhập Google thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/BaseSuccess"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string",
+                          "example": "access-token"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "ResetPasswordSuccess": {
+        "description": "Đặt lại mật khẩu thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BaseSuccess"
+            },
+            "example": {
+              "success": true,
+              "data": {
+                "message": "Đặt lại mật khẩu thành công"
+              }
+            }
+          }
+        }
+      },
+      "ForgotPasswordSuccess": {
+        "description": "Gửi email thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BaseSuccess"
+            },
+            "example": {
+              "success": true,
+              "data": {
+                "message": "Vui lòng kiểm tra email để đặt lại mật khẩu"
+              }
+            }
+          }
+        }
+      },
+      "VerifyEmailSuccess": {
+        "description": "Xác thực email thành công",
         "content": {
           "application/json": {
             "schema": {

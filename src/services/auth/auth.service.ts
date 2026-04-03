@@ -5,6 +5,9 @@ import { AppError } from "../../middlewares/error-handler";
 import { tokenService } from "./token.service";
 import { mailService } from "../mail/mail.service";
 import { verifyGoogleToken } from "./google.service";
+import { AUTH_MESSAGE } from "../../constants/messages/auth.message";
+import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
+import { PROVIDER_ENUM } from "../../constants/enums/provider.enums";
 
 export const authService = {
   //register service
@@ -16,42 +19,46 @@ export const authService = {
     targetScore: number;
     wordsPerDay: number;
   }) {
-    const isExisted = await prisma.users.findUnique({
-      where: { Email: data.email },
-    });
+    try {
+      const isExisted = await prisma.users.findUnique({
+        where: { Email: data.email },
+      });
 
-    if (isExisted) {
-      throw new AppError(403, "Tài khoản đã tồn tại trong hệ thống");
+      if (isExisted) {
+        throw new AppError(403, AUTH_MESSAGE.REGISTER.USER_EXISTED);
+      }
+
+      const hashPassword = await bcrypt.hash(data.password, 10);
+
+      const verifyToken = crypto.randomBytes(32).toString("hex");
+
+      const verifyTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+      await prisma.users.create({
+        data: {
+          Id: crypto.randomUUID(),
+          Email: data.email,
+          DisplayName: data.fullName,
+          PasswordHash: hashPassword,
+          CreatedAt: new Date(),
+          EmailVerificationToken: verifyToken,
+          EmailVerificationExpiresAt: verifyTokenExpiry,
+          EmailVerified: false,
+          IsActive: false,
+          Streak: 0,
+          TargetScore: data.targetScore,
+          WordsPerDay: data.wordsPerDay,
+        },
+      });
+
+      await mailService.sendRegisterEmail(data.email, verifyToken);
+
+      return {
+        message: AUTH_MESSAGE.REGISTER.SUCCESS,
+      };
+    } catch (error) {
+      throw new AppError(400, (error as Error).message);
     }
-
-    const hashPassword = await bcrypt.hash(data.password, 10);
-
-    const verifyToken = crypto.randomBytes(32).toString("hex");
-
-    const verifyTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await prisma.users.create({
-      data: {
-        Id: crypto.randomUUID(),
-        Email: data.email,
-        DisplayName: data.fullName,
-        PasswordHash: hashPassword,
-        CreatedAt: new Date(),
-        EmailVerificationToken: verifyToken,
-        EmailVerificationExpiresAt: verifyTokenExpiry,
-        EmailVerified: false,
-        Streak: 0,
-        TargetScore: data.targetScore,
-        WordsPerDay: data.wordsPerDay,
-      },
-    });
-
-    await mailService.sendRegisterEmail(data.email, verifyToken);
-
-    return {
-      message:
-        "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản",
-    };
   },
   //login service
   async login(
@@ -65,17 +72,17 @@ export const authService = {
     });
 
     if (!user) {
-      throw new AppError(400, "Email hoặc mật khẩu không đúng");
+      throw new AppError(400, AUTH_MESSAGE.REGISTER.NOT_EXIST);
     }
 
     if (!user.IsActive) {
-      throw new AppError(403, "Tài khoản đã bị khóa");
+      throw new AppError(403, AUTH_MESSAGE.REGISTER.BLOCKED);
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash!);
 
     if (!isMatch) {
-      throw new AppError(401, "Email hoặc mật khẩu không đúng");
+      throw new AppError(401, AUTH_MESSAGE.REGISTER.INVALID);
     }
 
     const { token: accessToken } = tokenService.signAccessToken(
@@ -91,6 +98,7 @@ export const authService = {
     );
 
     return {
+      message: AUTH_MESSAGE.LOGIN.SUCCESS,
       accessToken,
       refreshToken: refreshToken.Token,
       user: {
@@ -109,16 +117,20 @@ export const authService = {
   async logout(token: string, refreshToken: string) {
     await tokenService.blackListAccessToken(token);
 
-    await prisma.refresh_tokens.update({
+    const refresh = await prisma.refresh_tokens.update({
       where: { Token: refreshToken },
       data: { RevokedAt: new Date(), RevokedReason: "Logout" },
     });
+
+    if (!refresh) throw new AppError(400, AUTH_MESSAGE.LOG_OUT.ERROR);
+
+    return { message: AUTH_MESSAGE.LOG_OUT.SUCCESS };
   },
 
   //refresh token
   async refresh(token: string, deviceInfo?: string, ip?: string) {
     if (!token) {
-      throw new AppError(401, "Không tìm thấy refresh token");
+      throw new AppError(401, AUTH_MESSAGE.REFRESH.NOT_TOKEN_EXISTED);
     }
 
     try {
@@ -127,20 +139,16 @@ export const authService = {
 
       return { accessToken, refreshToken, user };
     } catch (error) {
-      if ((error as Error).message === "Reused detected") {
-        throw new AppError(
-          401,
-          "Phiên đăng nhập không hợp lệ! Vui lòng đăng nhập lại",
-        );
+      if ((error as Error).message === TOKEN_ROTATE_ENUM.REUSED) {
+        throw new AppError(401, AUTH_MESSAGE.REFRESH.INVALID_SESSION);
       }
 
       if (
-        ["Invalid Token", "Token reused"].includes((error as Error).message)
+        [TOKEN_ROTATE_ENUM.INVALID, TOKEN_ROTATE_ENUM.REUSED].includes(
+          (error as Error).message,
+        )
       ) {
-        throw new AppError(
-          401,
-          "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại",
-        );
+        throw new AppError(401, AUTH_MESSAGE.REFRESH.EXPIRED_SESSION);
       }
     }
   },
@@ -149,7 +157,7 @@ export const authService = {
   async loginWithGG(idToken: string, deviceInfo?: string, ip?: string) {
     try {
       if (!idToken) {
-        throw new AppError(400, "Token không hợp lệ");
+        throw new AppError(400, AUTH_MESSAGE.LOGIN.INVALID_TOKEN);
       }
       const payload = await verifyGoogleToken(idToken);
 
@@ -158,7 +166,7 @@ export const authService = {
       let user = await prisma.users.findUnique({ where: { Email: email } });
       let externalLogin = await prisma.external_logins.findFirst({
         where: {
-          Provider: "Google",
+          Provider: PROVIDER_ENUM.GOOGLE,
           ProviderKey: sub,
         },
       });
@@ -186,7 +194,7 @@ export const authService = {
               Email: email!,
               DisplayName: name!,
               AvatarUrl: picture!,
-              Provider: "Google",
+              Provider: PROVIDER_ENUM.GOOGLE,
               ProviderKey: sub,
               CreatedAt: createdAt,
             },
@@ -200,7 +208,7 @@ export const authService = {
             Email: email!,
             DisplayName: name!,
             AvatarUrl: picture!,
-            Provider: "Google",
+            Provider: PROVIDER_ENUM.GOOGLE,
             ProviderKey: sub,
             CreatedAt: createdAt,
           },
@@ -208,7 +216,7 @@ export const authService = {
       }
 
       if (!user) {
-        throw new AppError(400, "Login không thành công, vui lòng thử lại");
+        throw new AppError(400, AUTH_MESSAGE.LOGIN.ERROR);
       }
 
       const accessToken = tokenService.signAccessToken(
@@ -230,6 +238,66 @@ export const authService = {
       };
     } catch (error) {
       throw new AppError(400, (error as Error).message);
+    }
+  },
+
+  //forgot password
+  async forgotPassword(email: string) {
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+
+    const verifyTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+
+    try {
+      const user = await prisma.users.findUnique({
+        where: { Email: email },
+      });
+
+      if (!user) throw new AppError(400, AUTH_MESSAGE.FORGOT.NOT_EXISTED);
+
+      const userUpdate = await prisma.users.update({
+        where: { Email: user.Email },
+        data: {
+          EmailVerificationToken: verifyToken,
+          EmailVerificationExpiresAt: verifyTokenExpiry,
+        },
+      });
+
+      const { message } = await mailService.sendForgotPasswordEmail(
+        email,
+        userUpdate?.EmailVerificationToken!,
+      );
+
+      return { message: message };
+    } catch (error) {
+      throw new AppError(500, (error as Error).message);
+    }
+  },
+
+  //reset password - forgot
+  async resetForgotPassword(token: string, password: string) {
+    try {
+      const user = await prisma.users.findFirst({
+        where: { EmailVerificationToken: token },
+      });
+
+      if (!user?.EmailVerificationToken || !user.EmailVerificationExpiresAt)
+        throw new AppError(400, AUTH_MESSAGE.RESET.INVALID_TOKEN);
+
+      if (user.EmailVerificationExpiresAt < new Date())
+        throw new AppError(400, AUTH_MESSAGE.RESET.TOKEN_EXPIRED);
+
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      await prisma.users.update({
+        where: { Id: user.Id },
+        data: {
+          PasswordHash: passwordHash,
+          EmailVerificationToken: null,
+          EmailVerificationExpiresAt: null,
+        },
+      });
+    } catch (error) {
+      throw new AppError(500, (error as Error).message);
     }
   },
 };

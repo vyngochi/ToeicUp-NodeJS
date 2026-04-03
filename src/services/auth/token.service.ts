@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import * as crypto from "crypto";
 import { prisma } from "../../config/prisma";
 import { redis } from "../../config/redis";
+import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
+import { blacklistToken } from "../../libs/redisHelper";
 
 export const tokenService = {
   signAccessToken(userId: string, email: string, role: string) {
@@ -42,28 +44,28 @@ export const tokenService = {
       include: { users: true },
     });
 
-    if (!record) throw new Error("Invalid Token");
+    if (!record) throw new Error(TOKEN_ROTATE_ENUM.INVALID);
 
     if (record.RevokedAt) {
       await prisma.refresh_tokens.updateMany({
         where: { UserId: record.UserId },
         data: {
           RevokedAt: new Date(),
-          RevokedReason: "Reused detected",
+          RevokedReason: TOKEN_ROTATE_ENUM.REVOKED,
         },
       });
-      throw new Error("Token reused");
+      throw new Error(TOKEN_ROTATE_ENUM.REUSED);
     }
 
     if (record.ExpiresAt < new Date()) {
-      throw new Error("Token expired");
+      throw new Error(TOKEN_ROTATE_ENUM.EXPIRED);
     }
 
     await prisma.refresh_tokens.update({
       where: { Id: record.Id },
       data: {
         RevokedAt: new Date(),
-        RevokedReason: "Rotated",
+        RevokedReason: TOKEN_ROTATE_ENUM.ROTATED,
       },
     });
 
@@ -101,7 +103,7 @@ export const tokenService = {
     const ttl = decoded.exp - now;
 
     if (ttl > 0) {
-      await redis.setex(`blacklist:${decoded.jti}`, ttl, "1");
+      await blacklistToken.setBlacklist(decoded.jti, ttl);
     }
   },
 };

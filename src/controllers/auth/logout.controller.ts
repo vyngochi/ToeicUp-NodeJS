@@ -13,9 +13,9 @@ export const logoutController = async (
     const authHeader = req.headers.authorization!;
     const token = authHeader.slice(7);
 
-    await authService.logout(token, refreshToken);
+    const { message } = await authService.logout(token, refreshToken);
 
-    successResponse(res.clearCookie(REFRESH_COOKIE), 200, "Logout thành công");
+    successResponse(res.clearCookie(REFRESH_COOKIE), 200, message);
   } catch (error) {
     next(error);
   }

@@ -95,6 +95,7 @@ export const mailService = {
     );
 
     return {
+      message: "Tài khoản đã được xác thực",
       accessToken,
       refreshToken: refreshToken.Token,
       user: {
@@ -107,5 +108,52 @@ export const mailService = {
         wordsPerDay: user.WordsPerDay,
       },
     };
+  },
+
+  async sendForgotPasswordEmail(to: string, token: string) {
+    const link = `${config.frontendUrl}/reset-password?token=${token}`;
+
+    const resetPasswordEmail: MailOptions = {
+      from: `"Toeic Up" <${config.mail.user}>`,
+      to,
+      subject: "Đặt lại mật khẩu mới",
+      html: `
+    <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        
+        <div style="background-color: #4f46e5; padding: 20px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 24px;">Toeic Up</h1>
+        </div>
+
+        <div style="padding: 30px; color: #333;">
+          <h2 style="margin-top: 0;">Xin chào 👋</h2>
+          <p style="font-size: 15px; line-height: 1.6;">
+            Vui lòng truy cập vào link bên dưới để đổi mật khẩu:
+          </p>
+
+          <!-- Button -->
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${link}" 
+               style="background-color: #4f46e5; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Đổi mật khẩu
+            </a>
+          </div>
+
+          <p style="font-size: 14px; color: #999; margin-top: 20px;">
+            ⚠️ Link này sẽ hết hạn sau <b>15 phút</b>.
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #888;">
+          <p style="margin: 0;">© ${new Date().getFullYear()} Toeic Up. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  `,
+    };
+
+    await transporter.sendMail(resetPasswordEmail);
+    return { message: "Vui lòng kiểm tra hộp thư của bạn để đổi mật khẩu" };
   },
 };

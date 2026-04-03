@@ -23,6 +23,5 @@ export const errorResponse = (
     statusCode,
     message,
     errors,
-    data: null,
   });
 };
