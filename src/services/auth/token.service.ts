@@ -2,7 +2,6 @@ import { config } from "../../config/index";
 import jwt from "jsonwebtoken";
 import * as crypto from "crypto";
 import { prisma } from "../../config/prisma";
-import { redis } from "../../config/redis";
 import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
 import { blacklistToken } from "../../libs/redisHelper";
 
