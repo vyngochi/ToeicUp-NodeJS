@@ -11,8 +11,14 @@ const app = express();
 
 app.set("trust proxy", 1);
 app.use(helmet());
+const allowedOrigins = process.env.FRONTEND_CORS?.split(",") || [];
 app.use(
-  cors({ origin: process.env.FRONTEND_CORS?.split(","), credentials: true }),
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 app.use(express.json());
 app.use(cookieParser());

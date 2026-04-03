@@ -154,15 +154,24 @@ export const authService = {
   },
 
   //log out service
-  async logout(token: string, refreshToken: string) {
-    await tokenService.blackListAccessToken(token);
+  async logout(token: string | null, refreshToken: string) {
+    if (token) {
+      await tokenService.blackListAccessToken(token);
+    }
 
-    const refresh = await prisma.refresh_tokens.update({
-      where: { Token: refreshToken },
-      data: { RevokedAt: new Date(), RevokedReason: "Logout" },
-    });
-
-    if (!refresh) throw new AppError(400, AUTH_MESSAGE.LOG_OUT.ERROR);
+    if (refreshToken) {
+      try {
+        await prisma.refresh_tokens.update({
+          where: { Token: refreshToken },
+          data: {
+            RevokedAt: new Date(),
+            RevokedReason: "Logout",
+          },
+        });
+      } catch (error) {
+        console.error("Lỗi khi thu hồi token:", error);
+      }
+    }
 
     return { message: AUTH_MESSAGE.LOG_OUT.SUCCESS };
   },
