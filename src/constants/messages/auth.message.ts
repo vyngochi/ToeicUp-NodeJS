@@ -5,12 +5,15 @@ export const AUTH_MESSAGE = {
     USER_EXISTED: "Tài khoản đã tồn tại trong hệ thống",
     NOT_EXIST: "Tài khoản không tồn tại",
     INVALID: "Email hoặc mật khẩu không đúng",
-    BLOCKED: "Tài khoản đã bị khóa",
+    BLOCKED:
+      "Tài khoản của bạn đã bị khóa, vui lòng liên hệ admin để biết thêm thông tin",
   },
   LOGIN: {
     SUCCESS: "Đăng nhập thành công",
     ERROR: "Login không thành công, vui lòng thử lại",
     INVALID_TOKEN: "Token không hợp lệ",
+    REMIND:
+      "Chúng tôi đã gửi email xác thực tài khoản đến bạn. Vui lòng xác thực email để đăng nhập",
   },
   LOG_OUT: {
     SUCCESS: "Đăng xuất thành công",
@@ -23,9 +26,15 @@ export const AUTH_MESSAGE = {
   },
   FORGOT: {
     NOT_EXISTED: "Tài khoản không tồn tại trong hệ thống",
+    NOT_VERIFIED: "Vui lòng xác thực tài khoản để đổi mật khẩu",
+    BLOCKED:
+      "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để biết thêm thông tin",
   },
   RESET: {
     INVALID_TOKEN: "Token không hợp lệ",
     TOKEN_EXPIRED: "Token đã hết hạn, vui lòng gửi lại email",
+  },
+  VERIFY: {
+    SUCCESS: "Tài khoản đã được xác thực",
   },
 };

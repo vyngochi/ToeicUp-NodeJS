@@ -30,9 +30,8 @@ export const authService = {
 
       const hashPassword = await bcrypt.hash(data.password, 10);
 
-      const verifyToken = crypto.randomBytes(32).toString("hex");
-
-      const verifyTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+      const { verifyToken, verifyTokenExpiry } =
+        await tokenService.createVerifyToken(24);
 
       await prisma.users.create({
         data: {
@@ -44,7 +43,6 @@ export const authService = {
           EmailVerificationToken: verifyToken,
           EmailVerificationExpiresAt: verifyTokenExpiry,
           EmailVerified: false,
-          IsActive: false,
           Streak: 0,
           TargetScore: data.targetScore,
           WordsPerDay: data.wordsPerDay,
@@ -67,7 +65,7 @@ export const authService = {
     deviceInfo?: string,
     ip?: string,
   ) {
-    const user = await prisma.users.findUnique({
+    let user = await prisma.users.findUnique({
       where: { Email: email },
     });
 
@@ -77,6 +75,48 @@ export const authService = {
 
     if (!user.IsActive) {
       throw new AppError(403, AUTH_MESSAGE.REGISTER.BLOCKED);
+    }
+
+    if (
+      !user.EmailVerificationToken ||
+      user.EmailVerificationExpiresAt! < new Date()
+    ) {
+      const { verifyToken, verifyTokenExpiry } =
+        await tokenService.createVerifyToken(24);
+
+      user = await prisma.users.update({
+        where: { Email: user.Email },
+        data: {
+          EmailVerificationToken: verifyToken,
+          EmailVerificationExpiresAt: verifyTokenExpiry,
+        },
+      });
+    }
+
+    if (!user.EmailVerified) {
+      await mailService.sendRegisterEmail(
+        user.Email,
+        user.EmailVerificationToken!,
+      );
+      throw new AppError(401, AUTH_MESSAGE.LOGIN.REMIND);
+    }
+
+    if (!user.PasswordHash) {
+      if (
+        !user.PasswordResetToken ||
+        user.EmailVerificationExpiresAt! < new Date()
+      ) {
+        const { verifyToken, verifyTokenExpiry } =
+          await tokenService.createVerifyToken(1);
+
+        user = await prisma.users.update({
+          where: { Email: email },
+          data: {
+            PasswordResetToken: verifyToken,
+            PasswordResetExpiresAt: verifyTokenExpiry,
+          },
+        });
+      }
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash!);
@@ -243,34 +283,60 @@ export const authService = {
 
   //forgot password
   async forgotPassword(email: string) {
-    const verifyToken = crypto.randomBytes(32).toString("hex");
+    let user = await prisma.users.findUnique({
+      where: { Email: email },
+    });
 
-    const verifyTokenExpiry = new Date(Date.now() + (1 / 4) * 60 * 60 * 1000);
+    if (!user) throw new AppError(400, AUTH_MESSAGE.FORGOT.NOT_EXISTED);
 
-    try {
-      const user = await prisma.users.findUnique({
-        where: { Email: email },
-      });
+    if (!user.IsActive) {
+      throw new AppError(400, AUTH_MESSAGE.FORGOT.BLOCKED);
+    }
 
-      if (!user) throw new AppError(400, AUTH_MESSAGE.FORGOT.NOT_EXISTED);
+    if (
+      !user.EmailVerificationToken ||
+      user.EmailVerificationExpiresAt! < new Date()
+    ) {
+      const { verifyToken, verifyTokenExpiry } =
+        await tokenService.createVerifyToken(1);
 
-      const userUpdate = await prisma.users.update({
+      user = await prisma.users.update({
         where: { Email: user.Email },
         data: {
           EmailVerificationToken: verifyToken,
           EmailVerificationExpiresAt: verifyTokenExpiry,
         },
       });
+    }
 
-      const { message } = await mailService.sendForgotPasswordEmail(
-        email,
-        userUpdate?.EmailVerificationToken!,
+    if (!user.EmailVerified) {
+      await mailService.sendRemindVerifyEmail(
+        user.Email,
+        user.EmailVerificationToken!,
       );
 
-      return { message: message };
-    } catch (error) {
-      throw new AppError(500, (error as Error).message);
+      throw new AppError(403, AUTH_MESSAGE.FORGOT.NOT_VERIFIED);
     }
+
+    const {
+      verifyToken: passwordResetToken,
+      verifyTokenExpiry: passwordResetTokenExpired,
+    } = await tokenService.createVerifyToken();
+
+    const userUpdate = await prisma.users.update({
+      where: { Email: user.Email },
+      data: {
+        PasswordResetToken: passwordResetToken,
+        PasswordResetExpiresAt: passwordResetTokenExpired,
+      },
+    });
+
+    const { message } = await mailService.sendForgotPasswordEmail(
+      email,
+      userUpdate?.PasswordResetToken!,
+    );
+
+    return { message: message };
   },
 
   //reset password - forgot

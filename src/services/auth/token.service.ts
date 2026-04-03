@@ -106,4 +106,14 @@ export const tokenService = {
       await blacklistToken.setBlacklist(decoded.jti, ttl);
     }
   },
+
+  async createVerifyToken(expiredTime = 1) {
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+
+    const verifyTokenExpiry = new Date(
+      Date.now() + expiredTime * 60 * 60 * 1000,
+    );
+
+    return { verifyToken: verifyToken, verifyTokenExpiry: verifyTokenExpiry };
+  },
 };
