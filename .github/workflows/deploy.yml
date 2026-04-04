@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare Environment
+        run: cp .env.ci .env
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
