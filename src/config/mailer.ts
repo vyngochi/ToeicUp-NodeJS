@@ -1,15 +1,8 @@
-import nodemailer from "nodemailer";
+import { MailerSend } from "mailersend";
 import { config } from ".";
 
-export const transporter = nodemailer.createTransport({
-  host: config.mail.host,
-  port: config.mail.port,
-  secure: true,
-  family: 4,
-  auth: {
-    user: config.mail.user,
-    pass: config.mail.pass,
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-} as nodemailer.TransportOptions);
+export const mailerSend = new MailerSend({
+  apiKey: config.mail.API_KEY!,
+});
+
+export * from "mailersend";
