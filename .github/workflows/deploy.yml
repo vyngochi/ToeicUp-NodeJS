@@ -7,11 +7,12 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare Environment
-        run: cp .env.ci .env
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,15 +24,11 @@ jobs:
         run: npm install
 
       - name: Prisma Generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           npx prisma db pull
           npx prisma generate
 
       - name: Build Project
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         run: npm run build
 
       - name: Trigger Render Deploy
