@@ -82,7 +82,7 @@ export const mailService = {
       },
     });
 
-    const { token: accessToken } = tokenService.signAccessToken(
+    const { token: accessToken } = await tokenService.signAccessToken(
       user.Id,
       user.Email,
       user.Role,

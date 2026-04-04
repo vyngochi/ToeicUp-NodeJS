@@ -16,12 +16,12 @@ export const successResponse = (
 export const errorResponse = (
   res: Response,
   statusCode: number,
-  message: string,
+  message?: string | null,
   errors?: Object,
 ) => {
   return res.status(statusCode).json({
     statusCode,
-    message,
-    errors,
+    ...(message && { message }),
+    ...(errors && { errors }),
   });
 };

@@ -125,7 +125,7 @@ export const authService = {
       throw new AppError(401, AUTH_MESSAGE.REGISTER.INVALID);
     }
 
-    const { token: accessToken } = tokenService.signAccessToken(
+    const { token: accessToken } = await tokenService.signAccessToken(
       user.Id,
       user.Email,
       user.Role,
@@ -232,7 +232,7 @@ export const authService = {
               DisplayName: name!,
               AvatarUrl: picture!,
               CreatedAt: createdAt,
-              IsActive: true,
+              EmailVerified: true,
             },
           });
 
@@ -268,13 +268,13 @@ export const authService = {
         throw new AppError(400, AUTH_MESSAGE.LOGIN.ERROR);
       }
 
-      const accessToken = tokenService.signAccessToken(
+      const accessToken = await tokenService.signAccessToken(
         user.Id,
         user.Email,
         user.Role,
       );
 
-      const refreshToken = tokenService.createRefreshToken(
+      const refreshToken = await tokenService.createRefreshToken(
         user.Id,
         deviceInfo,
         ip,

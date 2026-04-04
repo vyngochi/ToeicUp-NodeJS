@@ -25,9 +25,12 @@ export const loginWithGGController = async (
       wordsPerDay: response.user.WordsPerDay,
     };
 
-    res.cookie(REFRESH_COOKIE, response.refreshToken, COOKIE_OPTIONS);
+    res.cookie(REFRESH_COOKIE, response.refreshToken.Token, COOKIE_OPTIONS);
 
-    successResponse(res, 200, "Login thành công", user);
+    successResponse(res, 200, "Login thành công", {
+      accessToken: response.accessToken,
+      user: user,
+    });
   } catch (error) {
     next(error);
   }

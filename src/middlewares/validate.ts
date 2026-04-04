@@ -11,7 +11,7 @@ export const validate =
       return errorResponse(
         res,
         400,
-        "Validation error",
+        null,
         z.flattenError(result.error).fieldErrors,
       );
     }

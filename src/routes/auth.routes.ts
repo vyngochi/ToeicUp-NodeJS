@@ -31,7 +31,7 @@ router.post(
   loginController,
 );
 router.post("/google", limiter(15, 10), loginWithGGController);
-router.post("/refresh", authenticate, limiter(15, 10), refreshController);
+router.post("/refresh", refreshController);
 router.post(
   "/forgot-password",
   validate(authSchema.forgotSchema),

@@ -6,7 +6,7 @@ import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
 import { blacklistToken } from "../../libs/redisHelper";
 
 export const tokenService = {
-  signAccessToken(userId: string, email: string, role: string) {
+  async signAccessToken(userId: string, email: string, role: string) {
     const jti = crypto.randomUUID();
     const token = jwt.sign(
       { userId: userId, email, role, jti },
@@ -74,7 +74,7 @@ export const tokenService = {
       ip,
     );
 
-    const { token: accessToken } = this.signAccessToken(
+    const { token: accessToken } = await this.signAccessToken(
       record.UserId,
       record.users.Email,
       record.users.Role,

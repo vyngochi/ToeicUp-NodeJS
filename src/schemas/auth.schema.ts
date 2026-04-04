@@ -13,10 +13,10 @@ export const authSchema = {
         .string()
         .min(8, "Mật khẩu tối thiểu 8 ký tự")
         .max(30, "Mật khẩu tối đa 30 ký tự")
-        .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
-        .regex(/[A-Z]/, "Phải có ít nhất 1 chữ hoa")
-        .regex(/\d/, "Phải có ít nhất 1 số")
-        .regex(/[\W_]/, "Phải có ít nhất 1 ký tự đặc biệt"),
+        .regex(/[a-z]/, "Mật khẩu phải có ít nhất 1 chữ thường")
+        .regex(/[A-Z]/, "Mật khẩu phải  có ít nhất 1 chữ hoa")
+        .regex(/\d/, "Mật khẩu phải  có ít nhất 1 số")
+        .regex(/[\W_]/, "Mật khẩu phải  có ít nhất 1 ký tự đặc biệt"),
       confirmPassword: z.string().min(1, "Vui lòng nhập mật khẩu xác nhận"),
       fullName: z.string().min(1, "Vui lòng nhập đầy đủ họ và tên"),
       targetScore: z

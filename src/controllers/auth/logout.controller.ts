@@ -18,12 +18,9 @@ export const logoutController = async (
 
     const { message } = await authService.logout(token, refreshToken);
 
-    successResponse(
-      res.clearCookie(REFRESH_COOKIE, COOKIE_OPTIONS),
-      200,
-      message,
-    );
-    next();
+    res.clearCookie(REFRESH_COOKIE, COOKIE_OPTIONS);
+
+    successResponse(res, 200, message);
   } catch (error) {
     next(error);
   }
