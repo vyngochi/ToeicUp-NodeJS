@@ -5,7 +5,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   backendUrl: process.env.BACKEND_URL!,
   frontendUrl: process.env.FRONTEND_URL!,
-  dbUrl: process.env.DATABASE_URL!,
+  dbUrl: process.env.DATABASE_URL,
   jwt: {
     secret: process.env.JWT_SECRET!,
     accessTtl: process.env.JWT_ACCESS_TTL || "5m",
