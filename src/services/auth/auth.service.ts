@@ -224,7 +224,7 @@ export const authService = {
       const createdAt = new Date();
 
       if (!user) {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
           user = await tx.users.create({
             data: {
               Id: userId,
