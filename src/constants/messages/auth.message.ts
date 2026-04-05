@@ -37,4 +37,11 @@ export const AUTH_MESSAGE = {
   VERIFY: {
     SUCCESS: "Tài khoản đã được xác thực",
   },
+  SET_PASSWORD: {
+    INVALID_TOKEN: "Token không hợp lệ, vui lòng thử lại",
+    NOT_TOKEN: "Token không tồn tại, vui lòng thử lại",
+    TOKEN_EXPIRED: "Token đã hết hạn, vui lòng đăng nhập lại",
+    SUCCESS: "Mật khẩu được thêm thành công",
+    MAIL: "Tài khoản được đăng ký bằng Google, chúng tôi đã gửi email đặt mật khẩu cho tài khoản của bạn",
+  },
 };

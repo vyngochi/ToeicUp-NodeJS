@@ -14,7 +14,7 @@ export const config = {
   redis: {
     url: process.env.REDIS_URL,
     token: process.env.REDIS_TOKEN,
-    host: process.env.REDIS_HOST || "localhost", // Local
+    host: process.env.REDIS_HOST || "localhost",
     port: Number(process.env.REDIS_PORT) || 6379,
   },
   mail: {

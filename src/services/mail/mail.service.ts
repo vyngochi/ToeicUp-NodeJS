@@ -245,4 +245,62 @@ export const mailService = {
       );
     }
   },
+
+  async sendSettingPasswordGGLogin(to: string, token: string) {
+    const link = `${config.frontendUrl}/set-password?token=${token}`;
+
+    const sentFrom = new Sender(config.mail.USER!, "Toeic Up");
+
+    const recipients = [new Recipient(to)];
+
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setSubject("Đặt mật khẩu cho phương thức đăng nhập thủ công")
+
+      .setHtml(
+        `
+      <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
+        <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+          
+          <div style="background-color: #4f46e5; padding: 20px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 24px;">Toeic Up</h1>
+          </div>
+
+          <div style="padding: 30px; color: #333;">
+            <h2>Xin chào 👋</h2>
+            <p>
+              Bạn đã đăng ký bằng tài khoản Google. Vui lòng nhấn vào link dưới để đặt mật khẩu cho tài khoản
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${link}" 
+                 style="background-color: #4f46e5; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Đặt mật khẩu
+              </a>
+            </div>
+
+            <p style="text-align: center" style="color: #999;">
+              ⚠️ Link hết hạn sau <b>15 phút</b>.
+            </p>
+          </div>
+
+          <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #888;">
+            © ${new Date().getFullYear()} Toeic Up
+          </div>
+        </div>
+      </div>
+    `,
+      )
+      .setText(`Xác nhận email tại: ${link}`);
+
+    try {
+      await mailerSend.email.send(emailParams);
+    } catch (err) {
+      throw new AppError(
+        400,
+        `Lỗi server, không thể gửi mail đặt password. Vui lòng thử lại sau hoặc đăng nhập bằng Google`,
+      );
+    }
+  },
 };

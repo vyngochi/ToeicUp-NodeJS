@@ -8,6 +8,7 @@ import { verifyGoogleToken } from "./google.service";
 import { AUTH_MESSAGE } from "../../constants/messages/auth.message";
 import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
 import { PROVIDER_ENUM } from "../../constants/enums/provider.enums";
+import { HttpStatus } from "../../constants/enums/status-code";
 
 export const authService = {
   //register service
@@ -70,11 +71,33 @@ export const authService = {
     });
 
     if (!user) {
-      throw new AppError(400, AUTH_MESSAGE.REGISTER.NOT_EXIST);
+      throw new AppError(HttpStatus.NOT_FOUND, AUTH_MESSAGE.REGISTER.NOT_EXIST);
     }
 
     if (!user.IsActive) {
-      throw new AppError(403, AUTH_MESSAGE.REGISTER.BLOCKED);
+      throw new AppError(HttpStatus.FORBIDDEN, AUTH_MESSAGE.REGISTER.BLOCKED);
+    }
+
+    if (!user.PasswordHash) {
+      const {
+        verifyToken: verifyPasswordToken,
+        verifyTokenExpiry: verifyExpired,
+      } = await tokenService.createVerifyToken(1);
+
+      user = await prisma.users.update({
+        where: { Id: user.Id },
+        data: {
+          PasswordResetToken: verifyPasswordToken,
+          PasswordResetExpiresAt: verifyExpired,
+        },
+      });
+
+      await mailService.sendSettingPasswordGGLogin(
+        user.Email,
+        user.PasswordResetToken!,
+      );
+
+      throw new AppError(HttpStatus.OK, AUTH_MESSAGE.SET_PASSWORD.MAIL);
     }
 
     if (
@@ -98,25 +121,7 @@ export const authService = {
         user.Email,
         user.EmailVerificationToken!,
       );
-      throw new AppError(401, AUTH_MESSAGE.LOGIN.REMIND);
-    }
-
-    if (!user.PasswordHash) {
-      if (
-        !user.PasswordResetToken ||
-        user.EmailVerificationExpiresAt! < new Date()
-      ) {
-        const { verifyToken, verifyTokenExpiry } =
-          await tokenService.createVerifyToken(1);
-
-        user = await prisma.users.update({
-          where: { Email: email },
-          data: {
-            PasswordResetToken: verifyToken,
-            PasswordResetExpiresAt: verifyTokenExpiry,
-          },
-        });
-      }
+      throw new AppError(HttpStatus.BAD_REQUEST, AUTH_MESSAGE.LOGIN.REMIND);
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash!);
@@ -374,5 +379,71 @@ export const authService = {
     } catch (error) {
       throw new AppError(500, (error as Error).message);
     }
+  },
+
+  //set password - GG Login
+  async setPassword(
+    token: string,
+    newPassword: string,
+    deviceInfo?: string,
+    ip?: string,
+  ) {
+    if (!token)
+      throw new AppError(
+        HttpStatus.UNAUTHORIZED,
+        AUTH_MESSAGE.SET_PASSWORD.INVALID_TOKEN,
+      );
+
+    let user = await prisma.users.findFirst({
+      where: { PasswordResetToken: token },
+    });
+
+    if (!user)
+      throw new AppError(
+        HttpStatus.UNAUTHORIZED,
+        AUTH_MESSAGE.SET_PASSWORD.NOT_TOKEN,
+      );
+
+    if (user?.PasswordResetExpiresAt! < new Date())
+      throw new AppError(
+        HttpStatus.UNAUTHORIZED,
+        AUTH_MESSAGE.SET_PASSWORD.TOKEN_EXPIRED,
+      );
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    user = await prisma.users.update({
+      where: { Email: user.Email },
+      data: {
+        PasswordHash: newPasswordHash,
+        PasswordResetToken: null,
+        PasswordResetExpiresAt: null,
+      },
+    });
+
+    let refreshToken = await prisma.refresh_tokens.findFirst({
+      where: { UserId: user.Id },
+    });
+
+    if (!refreshToken?.Token || refreshToken?.ExpiresAt! < new Date()) {
+      refreshToken = await tokenService.createRefreshToken(
+        user.Id,
+        deviceInfo,
+        ip,
+      );
+    }
+
+    const accessToken = await tokenService.signAccessToken(
+      user.Id,
+      user.Email,
+      user.Role,
+    );
+
+    return {
+      message: AUTH_MESSAGE.SET_PASSWORD.SUCCESS,
+      accessToken,
+      refreshToken,
+      user,
+    };
   },
 };
