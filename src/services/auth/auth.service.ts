@@ -443,7 +443,15 @@ export const authService = {
       message: AUTH_MESSAGE.SET_PASSWORD.SUCCESS,
       accessToken,
       refreshToken,
-      user,
+      user: {
+        id: user.Id,
+        email: user.Email,
+        displayName: user.DisplayName,
+        targetScore: user.TargetScore,
+        streak: user.Streak,
+        avatarUrl: user.AvatarUrl,
+        wordsPerDay: user.WordsPerDay,
+      },
     };
   },
 };

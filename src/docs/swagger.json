@@ -194,6 +194,28 @@
           }
         }
       }
+    },
+    "/api/auth/set-password": {
+      "post": {
+        "summary": "Đặt lại mật khẩu",
+        "description": "Đặt lại mật khẩu bằng token reset và trả về accessToken + refreshToken",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SetPasswordSuccess"
+          }
+        }
+      }
     }
   },
 
@@ -326,6 +348,28 @@
         "properties": {
           "success": { "type": "boolean", "example": false },
           "message": { "type": "string" }
+        }
+      },
+      "SetPasswordRequest": {
+        "type": "object",
+        "required": ["token", "newPassword", "confirmPassword"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "reset-token-abc123"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Abc123@",
+            "description": "Mật khẩu mới (phải chứa chữ hoa, chữ thường, số và ký tự đặc biệt)"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Abc123@",
+            "description": "Xác nhận mật khẩu"
+          }
         }
       }
     },
@@ -500,6 +544,44 @@
                         "accessToken": {
                           "type": "string",
                           "example": "access-token"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "SetPasswordSuccess": {
+        "description": "Đặt lại mật khẩu thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/BaseSuccess"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Đặt lại mật khẩu thành công"
+                        },
+                        "accessToken": {
+                          "type": "string",
+                          "example": "access-token"
+                        },
+                        "refreshToken": {
+                          "type": "string",
+                          "example": "refresh-token"
                         },
                         "user": {
                           "$ref": "#/components/schemas/User"
