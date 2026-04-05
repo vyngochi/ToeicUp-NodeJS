@@ -9,12 +9,10 @@ import {
   refreshController,
   registerController,
   verifyRegisterEmail,
-} from "../controllers/auth";
-import {
+  setPasswordController,
   forgotPasswordController,
   resetPasswordForgotController,
-} from "../controllers/auth/forgot-password.controller";
-import { setPasswordController } from "../controllers/auth/set-password.controller";
+} from "../controllers/auth";
 
 const router = Router();
 

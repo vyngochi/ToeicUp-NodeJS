@@ -149,6 +149,7 @@ model users {
   PasswordResetExpiresAt     DateTime?              @db.Timestamptz(6)
   PasswordResetToken         String?
   WordsPerDay                Int?
+  IsLoginExternal            Boolean?               @default(false)
   exercise_results           exercise_results[]
   external_logins            external_logins[]
   listening_progresses       listening_progresses[]
@@ -185,4 +186,10 @@ model words {
   UpdatedAt            DateTime?              @db.Timestamptz(6)
   user_word_progresses user_word_progresses[]
   word_definitions     word_definitions[]
+}
+
+enum goalonboardingstatus {
+  pending
+  skipped
+  completed
 }

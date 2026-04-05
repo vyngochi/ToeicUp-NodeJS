@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/error-handler";
 import routes from "./routes/index.";
 import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "./docs/swagger.json";
+import { SwaggerDocument } from "./docs";
 
 const app = express();
 
@@ -28,7 +28,7 @@ app.get("/", (_req, res) => {
 });
 
 //Swagger
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(SwaggerDocument));
 
 //Routes
 app.use("/api", routes);

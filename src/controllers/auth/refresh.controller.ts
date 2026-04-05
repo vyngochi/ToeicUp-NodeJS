@@ -19,7 +19,11 @@ export const refreshController = async (
       res.cookie(REFRESH_COOKIE, result?.refreshToken, COOKIE_OPTIONS),
       200,
       "Làm mới token thành công",
-      { accessToken: result?.accessToken, user: result?.user },
+      {
+        accessToken: result?.accessToken,
+        isSettingGoal: result?.isSettingGoal,
+        user: result?.user,
+      },
     );
   } catch (error) {
     res.clearCookie(REFRESH_COOKIE);

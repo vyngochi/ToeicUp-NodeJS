@@ -9,6 +9,7 @@ import { AUTH_MESSAGE } from "../../constants/messages/auth.message";
 import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
 import { PROVIDER_ENUM } from "../../constants/enums/provider.enums";
 import { HttpStatus } from "../../constants/enums/status-code";
+import { USER_RESPONSE } from "../../models";
 
 export const authService = {
   //register service
@@ -44,7 +45,6 @@ export const authService = {
           EmailVerificationToken: verifyToken,
           EmailVerificationExpiresAt: verifyTokenExpiry,
           EmailVerified: false,
-          Streak: 0,
           TargetScore: data.targetScore,
           WordsPerDay: data.wordsPerDay,
         },
@@ -146,6 +146,7 @@ export const authService = {
       message: AUTH_MESSAGE.LOGIN.SUCCESS,
       accessToken,
       refreshToken: refreshToken.Token,
+      isSettingGoal: user.TargetScore !== null && user.WordsPerDay !== null,
       user: {
         id: user.Id,
         email: user.Email,
@@ -188,10 +189,10 @@ export const authService = {
     }
 
     try {
-      const { accessToken, refreshToken, user } =
+      const { accessToken, refreshToken, user, isSettingGoal } =
         await tokenService.rotateRefreshToken(token, deviceInfo, ip);
 
-      return { accessToken, refreshToken, user };
+      return { accessToken, refreshToken, user, isSettingGoal };
     } catch (error) {
       if ((error as Error).message === TOKEN_ROTATE_ENUM.REUSED) {
         throw new AppError(401, AUTH_MESSAGE.REFRESH.INVALID_SESSION);
@@ -217,7 +218,10 @@ export const authService = {
 
       const { email, name, picture, sub } = payload;
 
-      let user = await prisma.users.findUnique({ where: { Email: email } });
+      let user = await prisma.users.findUnique({
+        where: { Email: email },
+        select: USER_RESPONSE,
+      });
       let externalLogin = await prisma.external_logins.findFirst({
         where: {
           Provider: PROVIDER_ENUM.GOOGLE,
@@ -229,39 +233,27 @@ export const authService = {
       const createdAt = new Date();
 
       if (!user) {
-        await prisma.$transaction(async (tx: any) => {
-          user = await tx.users.create({
-            data: {
-              Id: userId,
-              Email: email!,
-              DisplayName: name!,
-              AvatarUrl: picture!,
-              CreatedAt: createdAt,
-              EmailVerified: true,
-            },
-          });
-
-          await tx.external_logins.create({
-            data: {
-              Id: crypto.randomUUID(),
-              UserId: userId,
-              Email: email!,
-              DisplayName: name!,
-              AvatarUrl: picture!,
-              Provider: PROVIDER_ENUM.GOOGLE,
-              ProviderKey: sub,
-              CreatedAt: createdAt,
-            },
-          });
+        user = await prisma.users.create({
+          data: {
+            Id: userId,
+            Email: email!,
+            DisplayName: name!,
+            AvatarUrl: picture!,
+            CreatedAt: createdAt,
+            EmailVerified: true,
+            IsLoginExternal: true,
+          },
         });
-      } else if (!externalLogin) {
+      }
+
+      if (!externalLogin) {
         await prisma.external_logins.create({
           data: {
             Id: crypto.randomUUID(),
             UserId: user.Id,
-            Email: email!,
-            DisplayName: name!,
-            AvatarUrl: picture!,
+            Email: user.Email || email!,
+            DisplayName: user.DisplayName || name,
+            AvatarUrl: user.AvatarUrl || picture,
             Provider: PROVIDER_ENUM.GOOGLE,
             ProviderKey: sub,
             CreatedAt: createdAt,
@@ -287,6 +279,7 @@ export const authService = {
 
       return {
         accessToken,
+        isSettingGoal: user.TargetScore !== null && user.WordsPerDay !== null,
         refreshToken,
         user,
       };
@@ -412,17 +405,18 @@ export const authService = {
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
-    user = await prisma.users.update({
+    let userRes = await prisma.users.update({
       where: { Email: user.Email },
       data: {
         PasswordHash: newPasswordHash,
         PasswordResetToken: null,
         PasswordResetExpiresAt: null,
       },
+      select: USER_RESPONSE,
     });
 
     let refreshToken = await prisma.refresh_tokens.findFirst({
-      where: { UserId: user.Id },
+      where: { UserId: userRes.Id },
     });
 
     if (!refreshToken?.Token || refreshToken?.ExpiresAt! < new Date()) {
@@ -443,15 +437,7 @@ export const authService = {
       message: AUTH_MESSAGE.SET_PASSWORD.SUCCESS,
       accessToken,
       refreshToken,
-      user: {
-        id: user.Id,
-        email: user.Email,
-        displayName: user.DisplayName,
-        targetScore: user.TargetScore,
-        streak: user.Streak,
-        avatarUrl: user.AvatarUrl,
-        wordsPerDay: user.WordsPerDay,
-      },
+      user: userRes,
     };
   },
 };

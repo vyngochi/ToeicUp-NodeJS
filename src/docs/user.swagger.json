@@ -1,0 +1,109 @@
+{
+  "paths": {
+    "/api/user/set-goal": {
+      "put": {
+        "summary": "Cập nhật mục tiêu học tập",
+        "description": "Cập nhật targetScore và wordsPerDay của người dùng",
+        "tags": ["User"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGoalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SetGoalSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "SetGoalRequest": {
+        "type": "object",
+        "required": ["targetScore", "wordsPerDay"],
+        "properties": {
+          "targetScore": {
+            "type": "integer",
+            "example": 750,
+            "description": "Mục tiêu điểm TOEIC"
+          },
+          "wordsPerDay": {
+            "type": "integer",
+            "example": 20,
+            "description": "Số từ học mỗi ngày"
+          }
+        }
+      }
+    },
+
+    "responses": {
+      "SetGoalSuccess": {
+        "description": "Cập nhật mục tiêu thành công",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/BaseSuccess"
+                },
+                {
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Cập nhật mục tiêu thành công"
+                        },
+                        "response": {
+                          "type": "object",
+                          "properties": {
+                            "targetScore": {
+                              "type": "integer",
+                              "example": 750
+                            },
+                            "wordsPerDay": {
+                              "type": "integer",
+                              "example": 20
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "description": "Không có quyền truy cập",
+        "content": {
+          "application/json": {
+            "example": {
+              "statusCode": 404,
+              "message": "Người dùng không tồn tại"
+            }
+          }
+        }
+      }
+    }
+  }
+}

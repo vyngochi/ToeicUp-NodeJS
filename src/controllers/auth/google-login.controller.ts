@@ -15,21 +15,12 @@ export const loginWithGGController = async (
 
     const response = await authService.loginWithGG(idToken, deviceInfo, ip);
 
-    const user = {
-      id: response.user.Id,
-      email: response.user.Email,
-      displayName: response.user.DisplayName,
-      targetScore: response.user.TargetScore,
-      streak: response.user.Streak,
-      avatarUrl: response.user.AvatarUrl,
-      wordsPerDay: response.user.WordsPerDay,
-    };
-
     res.cookie(REFRESH_COOKIE, response.refreshToken.Token, COOKIE_OPTIONS);
 
     successResponse(res, 200, "Login thành công", {
       accessToken: response.accessToken,
-      user: user,
+      isSettingGoal: response.isSettingGoal,
+      user: response.user,
     });
   } catch (error) {
     next(error);

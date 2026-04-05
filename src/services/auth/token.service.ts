@@ -83,14 +83,16 @@ export const tokenService = {
     return {
       accessToken,
       refreshToken: newRefresh.Token,
+      isSettingGoal:
+        record.users.TargetScore !== null && record.users.WordsPerDay !== null,
       user: {
-        id: record.users.Id,
-        email: record.users.Email,
-        displayName: record.users.DisplayName,
-        targetScore: record.users.TargetScore,
-        streak: record.users.Streak,
-        avatarUrl: record.users.AvatarUrl,
-        wordsPerDay: record.users.WordsPerDay,
+        Id: record.users.Id,
+        Email: record.users.Email,
+        DisplayName: record.users.DisplayName,
+        TargetScore: record.users.TargetScore,
+        Streak: record.users.Streak,
+        AvatarUrl: record.users.AvatarUrl,
+        WordsPerDay: record.users.WordsPerDay,
       },
     };
   },

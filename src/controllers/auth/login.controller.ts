@@ -13,12 +13,12 @@ export const loginController = async (
     const deviceInfo = req.headers["user-agent"];
     const ip = req.ip;
 
-    const { message, accessToken, refreshToken, user } =
+    const { message, accessToken, refreshToken, user, isSettingGoal } =
       await authService.login(email, password, deviceInfo, ip);
 
     res.cookie(REFRESH_COOKIE, refreshToken, COOKIE_OPTIONS);
 
-    successResponse(res, 200, message, { accessToken, user });
+    successResponse(res, 200, message, { accessToken, isSettingGoal, user });
   } catch (error) {
     next(error);
   }
