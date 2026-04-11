@@ -67,7 +67,7 @@ export const authSchema = {
       confirmPassword: z.string().min(1, "Vui lòng nhập mật khẩu xác nhận"),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
-      message: "Mật khẩu khôg khớp",
+      message: "Mật khẩu không khớp",
       path: ["confirmPassword"],
     }),
 };
