@@ -81,7 +81,10 @@ export const mailService = {
       throw new AppError(400, "Token không hợp lệ");
     }
 
-    if (user.EmailVerificationExpiresAt! < new Date()) {
+    if (
+      !user.EmailVerificationExpiresAt ||
+      user.EmailVerificationExpiresAt < new Date()
+    ) {
       throw new AppError(400, "Token đã hết hạn. Vui lòng đăng ký lại");
     }
 

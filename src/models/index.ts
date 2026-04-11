@@ -1,1 +1,1 @@
-export * from "./user.select";
+export * from "./selects/user.select";

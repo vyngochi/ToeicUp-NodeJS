@@ -10,6 +10,9 @@ import { TOKEN_ROTATE_ENUM } from "../../constants/enums";
 import { PROVIDER_ENUM } from "../../constants/enums/provider.enums";
 import { HttpStatus } from "../../constants/enums/status-code";
 import { USER_RESPONSE } from "../../models";
+import cloudinary from "../../config/cloudinary";
+import { authRepositories } from "../../repositories/auth.repository";
+import { createUserMeta } from "../../libs/userHelper";
 
 export const authService = {
   //register service
@@ -22,9 +25,9 @@ export const authService = {
     wordsPerDay: number;
   }) {
     try {
-      const isExisted = await prisma.users.findUnique({
-        where: { Email: data.email },
-      });
+      const isExisted = await authRepositories.findUserByEmailWithResponse(
+        data.email,
+      );
 
       if (isExisted) {
         throw new AppError(403, AUTH_MESSAGE.REGISTER.USER_EXISTED);
@@ -35,19 +38,19 @@ export const authService = {
       const { verifyToken, verifyTokenExpiry } =
         await tokenService.createVerifyToken(24);
 
-      await prisma.users.create({
-        data: {
-          Id: crypto.randomUUID(),
-          Email: data.email,
-          DisplayName: data.fullName,
-          PasswordHash: hashPassword,
-          CreatedAt: new Date(),
-          EmailVerificationToken: verifyToken,
-          EmailVerificationExpiresAt: verifyTokenExpiry,
-          EmailVerified: false,
-          TargetScore: data.targetScore,
-          WordsPerDay: data.wordsPerDay,
-        },
+      const { createdAt, userId } = createUserMeta();
+
+      await authRepositories.createUser({
+        Id: userId,
+        Email: data.email,
+        DisplayName: data.fullName,
+        PasswordHash: hashPassword,
+        CreatedAt: createdAt,
+        EmailVerificationToken: verifyToken,
+        EmailVerificationExpiresAt: verifyTokenExpiry,
+        EmailVerified: false,
+        TargetScore: data.targetScore,
+        WordsPerDay: data.wordsPerDay,
       });
 
       await mailService.sendRegisterEmail(data.email, verifyToken);
@@ -66,9 +69,7 @@ export const authService = {
     deviceInfo?: string,
     ip?: string,
   ) {
-    let user = await prisma.users.findUnique({
-      where: { Email: email },
-    });
+    let user = await authRepositories.findUserByEmail(email);
 
     if (!user) {
       throw new AppError(HttpStatus.NOT_FOUND, AUTH_MESSAGE.REGISTER.NOT_EXIST);
@@ -84,12 +85,9 @@ export const authService = {
         verifyTokenExpiry: verifyExpired,
       } = await tokenService.createVerifyToken(1);
 
-      user = await prisma.users.update({
-        where: { Id: user.Id },
-        data: {
-          PasswordResetToken: verifyPasswordToken,
-          PasswordResetExpiresAt: verifyExpired,
-        },
+      user = await authRepositories.updateUser(user.Id, {
+        PasswordResetToken: verifyPasswordToken,
+        PasswordResetExpiresAt: verifyExpired,
       });
 
       await mailService.sendSettingPasswordGGLogin(
@@ -107,12 +105,9 @@ export const authService = {
       const { verifyToken, verifyTokenExpiry } =
         await tokenService.createVerifyToken(24);
 
-      user = await prisma.users.update({
-        where: { Email: user.Email },
-        data: {
-          EmailVerificationToken: verifyToken,
-          EmailVerificationExpiresAt: verifyTokenExpiry,
-        },
+      user = await authRepositories.updateUser(user.Id, {
+        EmailVerificationToken: verifyToken,
+        EmailVerificationExpiresAt: verifyTokenExpiry,
       });
     }
 
@@ -218,45 +213,42 @@ export const authService = {
 
       const { email, name, picture, sub } = payload;
 
-      let user = await prisma.users.findUnique({
-        where: { Email: email },
-        select: USER_RESPONSE,
-      });
-      let externalLogin = await prisma.external_logins.findFirst({
-        where: {
-          Provider: PROVIDER_ENUM.GOOGLE,
-          ProviderKey: sub,
-        },
-      });
+      let user = await authRepositories.findUserByEmailWithResponse(email!);
 
-      const userId = crypto.randomUUID();
-      const createdAt = new Date();
+      let externalLogin = await authRepositories.findUserExternal(
+        PROVIDER_ENUM.GOOGLE,
+        sub,
+      );
+
+      const { createdAt, userId } = createUserMeta();
+
+      const uploadAvatar = await cloudinary.uploader.upload(picture!, {
+        folder: "user-avatars",
+      });
 
       if (!user) {
-        user = await prisma.users.create({
-          data: {
-            Id: userId,
-            Email: email!,
-            DisplayName: name!,
-            AvatarUrl: picture!,
-            CreatedAt: createdAt,
-            EmailVerified: true,
-            IsLoginExternal: true,
-          },
+        user = await authRepositories.createUser({
+          Id: userId,
+          Email: email!,
+          DisplayName: name!,
+          AvatarUrl: uploadAvatar.secure_url || picture!,
+          CreatedAt: createdAt,
+          EmailVerified: true,
+          IsLoginExternal: true,
         });
       }
 
       if (!externalLogin) {
-        await prisma.external_logins.create({
-          data: {
-            Id: crypto.randomUUID(),
-            UserId: user.Id,
-            Email: user.Email || email!,
-            DisplayName: user.DisplayName || name,
-            AvatarUrl: user.AvatarUrl || picture,
-            Provider: PROVIDER_ENUM.GOOGLE,
-            ProviderKey: sub,
-            CreatedAt: createdAt,
+        await authRepositories.createExternalUser({
+          Id: crypto.randomUUID(),
+          Email: user.Email || email!,
+          DisplayName: user.DisplayName || name,
+          AvatarUrl: uploadAvatar.secure_url || picture!,
+          Provider: PROVIDER_ENUM.GOOGLE,
+          ProviderKey: sub,
+          CreatedAt: createdAt,
+          users: {
+            connect: { Id: user.Id },
           },
         });
       }
