@@ -350,13 +350,13 @@ export const authService = {
   async resetForgotPassword(token: string, password: string) {
     try {
       const user = await prisma.users.findFirst({
-        where: { EmailVerificationToken: token },
+        where: { PasswordResetToken: token },
       });
 
-      if (!user?.EmailVerificationToken || !user.EmailVerificationExpiresAt)
+      if (!user?.PasswordResetToken || !user.PasswordResetExpiresAt)
         throw new AppError(400, AUTH_MESSAGE.RESET.INVALID_TOKEN);
 
-      if (user.EmailVerificationExpiresAt < new Date())
+      if (user.PasswordResetExpiresAt < new Date())
         throw new AppError(400, AUTH_MESSAGE.RESET.TOKEN_EXPIRED);
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -365,8 +365,8 @@ export const authService = {
         where: { Id: user.Id },
         data: {
           PasswordHash: passwordHash,
-          EmailVerificationToken: null,
-          EmailVerificationExpiresAt: null,
+          PasswordResetToken: null,
+          PasswordResetExpiresAt: null,
         },
       });
     } catch (error) {
