@@ -24,9 +24,9 @@ export const resetPasswordForgotController = async (
   next: NextFunction,
 ) => {
   try {
-    const { token, password } = req.body;
+    const { token, newPassword } = req.body;
 
-    await authService.resetForgotPassword(token, password);
+    await authService.resetForgotPassword(token, newPassword);
 
     successResponse(res, 200, "Đổi mật khẩu thành công");
   } catch (error) {
