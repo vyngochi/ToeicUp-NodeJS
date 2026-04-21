@@ -150,6 +150,9 @@ model users {
   PasswordResetToken         String?
   WordsPerDay                Int?
   IsLoginExternal            Boolean?               @default(false)
+  FirstName                  String?                @db.VarChar(100)
+  LastName                   String?                @db.VarChar(100)
+  Bio                        String?                @db.VarChar(1000)
   exercise_results           exercise_results[]
   external_logins            external_logins[]
   listening_progresses       listening_progresses[]

@@ -8,9 +8,19 @@ export const registerController = async (
   next: NextFunction,
 ) => {
   try {
-    const registerData = req.body;
+    const { email, password, firstName, lastName, targetScore, wordsPerDay } =
+      req.body;
 
-    const { message } = await authService.register(registerData);
+    const { message } = await authService.register({
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      targetScore: targetScore,
+      password: password,
+      wordsPerDay: wordsPerDay,
+    });
+
+    console.log("words :" + wordsPerDay);
 
     successResponse(res, 201, message);
   } catch (error) {
