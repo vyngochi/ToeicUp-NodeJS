@@ -18,7 +18,8 @@ export const authSchema = {
         .regex(/\d/, "Mật khẩu phải  có ít nhất 1 số")
         .regex(/[\W_]/, "Mật khẩu phải  có ít nhất 1 ký tự đặc biệt"),
       confirmPassword: z.string().min(1, "Vui lòng nhập mật khẩu xác nhận"),
-      fullName: z.string().min(1, "Vui lòng nhập đầy đủ họ và tên"),
+      firstName: z.string().min(1, "Vui lòng nhập tên"),
+      lastName: z.string().min(1, "Vui lòng nhập họ"),
       targetScore: z
         .number()
         .min(450, "Điểm mục tiêu phải lớn hơn hoặc bằng 450")
