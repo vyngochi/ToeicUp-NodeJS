@@ -3,5 +3,4 @@ export const TOKEN_ROTATE_ENUM = {
   REVOKED: "Token revoked",
   EXPIRED: "Token expired",
   ROTATED: "Rotated",
-  REUSED: "Token reused",
 };

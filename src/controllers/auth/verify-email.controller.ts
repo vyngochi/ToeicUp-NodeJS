@@ -9,7 +9,7 @@ export const verifyRegisterEmail = async (
   next: NextFunction,
 ) => {
   try {
-    const token = req.params.token as string;
+    const { token } = req.body;
     const deviceInfo = req.headers["user-agent"];
     const ip = req.ip;
 
@@ -19,6 +19,7 @@ export const verifyRegisterEmail = async (
 
     successResponse(res, 200, result.message, {
       accessToken: result.accessToken,
+      isSettingGoal: result.isSettingGoal,
       user: result.user,
     });
   } catch (error) {

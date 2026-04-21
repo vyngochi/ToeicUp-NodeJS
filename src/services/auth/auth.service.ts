@@ -19,48 +19,49 @@ export const authService = {
   async register(data: {
     email: string;
     password: string;
-    confirmPassword: string;
-    fullName: string;
+    lastName: string;
+    firstName: string;
     targetScore: number;
     wordsPerDay: number;
   }) {
-    try {
-      const isExisted = await authRepositories.findUserByEmailWithResponse(
-        data.email,
+    const isExisted = await authRepositories.findUserByEmailWithResponse(
+      data.email,
+    );
+
+    if (isExisted) {
+      throw new AppError(
+        HttpStatus.FORBIDDEN,
+        AUTH_MESSAGE.REGISTER.USER_EXISTED,
       );
-
-      if (isExisted) {
-        throw new AppError(403, AUTH_MESSAGE.REGISTER.USER_EXISTED);
-      }
-
-      const hashPassword = await bcrypt.hash(data.password, 10);
-
-      const { verifyToken, verifyTokenExpiry } =
-        await tokenService.createVerifyToken(24);
-
-      const { createdAt, userId } = createUserMeta();
-
-      await authRepositories.createUser({
-        Id: userId,
-        Email: data.email,
-        DisplayName: data.fullName,
-        PasswordHash: hashPassword,
-        CreatedAt: createdAt,
-        EmailVerificationToken: verifyToken,
-        EmailVerificationExpiresAt: verifyTokenExpiry,
-        EmailVerified: false,
-        TargetScore: data.targetScore,
-        WordsPerDay: data.wordsPerDay,
-      });
-
-      await mailService.sendRegisterEmail(data.email, verifyToken);
-
-      return {
-        message: AUTH_MESSAGE.REGISTER.SUCCESS,
-      };
-    } catch (error) {
-      throw new AppError(400, (error as Error).message);
     }
+
+    const hashPassword = await bcrypt.hash(data.password, 10);
+
+    const { verifyToken, verifyTokenExpiry } =
+      await tokenService.createVerifyToken(24);
+
+    const { createdAt, userId } = createUserMeta();
+
+    await authRepositories.createUser({
+      Id: userId,
+      Email: data.email,
+      DisplayName: data.lastName + " " + data.firstName,
+      LastName: data.lastName,
+      FirstName: data.firstName,
+      PasswordHash: hashPassword,
+      CreatedAt: createdAt,
+      EmailVerificationToken: verifyToken,
+      EmailVerificationExpiresAt: verifyTokenExpiry,
+      EmailVerified: false,
+      TargetScore: data.targetScore,
+      WordsPerDay: data.wordsPerDay,
+    });
+
+    await mailService.sendRegisterEmail(data.email, verifyToken);
+
+    return {
+      message: AUTH_MESSAGE.REGISTER.SUCCESS,
+    };
   },
   //login service
   async login(
@@ -72,11 +73,11 @@ export const authService = {
     let user = await authRepositories.findUserByEmail(email);
 
     if (!user) {
-      throw new AppError(HttpStatus.NOT_FOUND, AUTH_MESSAGE.REGISTER.NOT_EXIST);
+      throw new AppError(HttpStatus.NOT_FOUND, AUTH_MESSAGE.LOGIN.NOT_EXIST);
     }
 
     if (!user.IsActive) {
-      throw new AppError(HttpStatus.FORBIDDEN, AUTH_MESSAGE.REGISTER.BLOCKED);
+      throw new AppError(HttpStatus.FORBIDDEN, AUTH_MESSAGE.LOGIN.BLOCKED);
     }
 
     if (!user.PasswordHash) {
@@ -145,11 +146,15 @@ export const authService = {
       user: {
         Id: user.Id,
         Email: user.Email,
+        FirstName: user.FirstName,
+        LastName: user.LastName,
         DisplayName: user.DisplayName,
         TargetScore: user.TargetScore,
         Streak: user.Streak,
         AvatarUrl: user.AvatarUrl,
         WordsPerDay: user.WordsPerDay,
+        Role: user.Role,
+        Bio: user.Bio,
       },
     };
   },
@@ -180,7 +185,7 @@ export const authService = {
   //refresh token
   async refresh(token: string, deviceInfo?: string, ip?: string) {
     if (!token) {
-      throw new AppError(401, AUTH_MESSAGE.REFRESH.NOT_TOKEN_EXISTED);
+      throw new AppError(400, AUTH_MESSAGE.REFRESH.NOT_TOKEN_EXISTED);
     }
 
     try {
@@ -189,95 +194,102 @@ export const authService = {
 
       return { accessToken, refreshToken, user, isSettingGoal };
     } catch (error) {
-      if ((error as Error).message === TOKEN_ROTATE_ENUM.REUSED) {
+      const message = (error as Error).message;
+
+      if (message === TOKEN_ROTATE_ENUM.INVALID) {
+        throw new AppError(400, AUTH_MESSAGE.REFRESH.FAILED);
+      }
+
+      if (message === TOKEN_ROTATE_ENUM.REVOKED) {
         throw new AppError(401, AUTH_MESSAGE.REFRESH.INVALID_SESSION);
       }
 
-      if (
-        [TOKEN_ROTATE_ENUM.INVALID, TOKEN_ROTATE_ENUM.REUSED].includes(
-          (error as Error).message,
-        )
-      ) {
+      if (message === TOKEN_ROTATE_ENUM.EXPIRED) {
         throw new AppError(401, AUTH_MESSAGE.REFRESH.EXPIRED_SESSION);
       }
+
+      if ([TOKEN_ROTATE_ENUM.REVOKED].includes(message)) {
+        throw new AppError(401, AUTH_MESSAGE.REFRESH.INVALID_SESSION);
+      }
+
+      throw new AppError(500, AUTH_MESSAGE.REFRESH.FAILED);
     }
   },
 
   //login with google
   async loginWithGG(idToken: string, deviceInfo?: string, ip?: string) {
-    try {
-      if (!idToken) {
-        throw new AppError(400, AUTH_MESSAGE.LOGIN.INVALID_TOKEN);
-      }
-      const payload = await verifyGoogleToken(idToken);
-
-      const { email, name, picture, sub } = payload;
-
-      let user = await authRepositories.findUserByEmailWithResponse(email!);
-
-      let externalLogin = await authRepositories.findUserExternal(
-        PROVIDER_ENUM.GOOGLE,
-        sub,
-      );
-
-      const { createdAt, userId } = createUserMeta();
-
-      const uploadAvatar = await cloudinary.uploader.upload(picture!, {
-        folder: "user-avatars",
-      });
-
-      if (!user) {
-        user = await authRepositories.createUser({
-          Id: userId,
-          Email: email!,
-          DisplayName: name!,
-          AvatarUrl: uploadAvatar.secure_url || picture!,
-          CreatedAt: createdAt,
-          EmailVerified: true,
-          IsLoginExternal: true,
-        });
-      }
-
-      if (!externalLogin) {
-        await authRepositories.createExternalUser({
-          Id: crypto.randomUUID(),
-          Email: user.Email || email!,
-          DisplayName: user.DisplayName || name,
-          AvatarUrl: uploadAvatar.secure_url || picture!,
-          Provider: PROVIDER_ENUM.GOOGLE,
-          ProviderKey: sub,
-          CreatedAt: createdAt,
-          users: {
-            connect: { Id: user.Id },
-          },
-        });
-      }
-
-      if (!user) {
-        throw new AppError(400, AUTH_MESSAGE.LOGIN.ERROR);
-      }
-
-      const accessToken = await tokenService.signAccessToken(
-        user.Id,
-        user.Email,
-        user.Role,
-      );
-
-      const refreshToken = await tokenService.createRefreshToken(
-        user.Id,
-        deviceInfo,
-        ip,
-      );
-
-      return {
-        accessToken,
-        isSettingGoal: user.TargetScore !== null && user.WordsPerDay !== null,
-        refreshToken,
-        user,
-      };
-    } catch (error) {
-      throw new AppError(400, (error as Error).message);
+    if (!idToken) {
+      throw new AppError(400, AUTH_MESSAGE.LOGIN.INVALID_TOKEN);
     }
+    const payload = await verifyGoogleToken(idToken);
+
+    const { email, name, picture, sub } = payload;
+
+    let user = await authRepositories.findUserByEmailWithResponse(email!);
+
+    if (user && !user.IsActive)
+      throw new AppError(HttpStatus.UNAUTHORIZED, AUTH_MESSAGE.LOGIN.BLOCKED);
+
+    let externalLogin = await authRepositories.findUserExternal(
+      PROVIDER_ENUM.GOOGLE,
+      sub,
+    );
+
+    const { createdAt, userId } = createUserMeta();
+
+    const uploadAvatar = await cloudinary.uploader.upload(picture!, {
+      folder: "user-avatars",
+    });
+
+    if (!user) {
+      user = await authRepositories.createUser({
+        Id: userId,
+        Email: email!,
+        DisplayName: name!,
+        AvatarUrl: uploadAvatar.secure_url || picture!,
+        CreatedAt: createdAt,
+        EmailVerified: true,
+        IsLoginExternal: true,
+      });
+    }
+
+    if (!externalLogin) {
+      await authRepositories.createExternalUser({
+        Id: crypto.randomUUID(),
+        Email: user.Email || email!,
+        DisplayName: user.DisplayName || name,
+        AvatarUrl: uploadAvatar.secure_url || picture!,
+        Provider: PROVIDER_ENUM.GOOGLE,
+        ProviderKey: sub,
+        CreatedAt: createdAt,
+        users: {
+          connect: { Id: user.Id },
+        },
+      });
+    }
+
+    if (!user) {
+      throw new AppError(HttpStatus.BAD_REQUEST, AUTH_MESSAGE.LOGIN.ERROR);
+    }
+
+    const accessToken = await tokenService.signAccessToken(
+      user.Id,
+      user.Email,
+      user.Role,
+    );
+
+    const refreshToken = await tokenService.createRefreshToken(
+      user.Id,
+      deviceInfo,
+      ip,
+    );
+
+    return {
+      accessToken,
+      isSettingGoal: user.TargetScore !== null && user.WordsPerDay !== null,
+      refreshToken,
+      user,
+    };
   },
 
   //forgot password
@@ -340,30 +352,26 @@ export const authService = {
 
   //reset password - forgot
   async resetForgotPassword(token: string, password: string) {
-    try {
-      const user = await prisma.users.findFirst({
-        where: { PasswordResetToken: token },
-      });
+    const user = await prisma.users.findFirst({
+      where: { PasswordResetToken: token },
+    });
 
-      if (!user?.PasswordResetToken || !user.PasswordResetExpiresAt)
-        throw new AppError(400, AUTH_MESSAGE.RESET.INVALID_TOKEN);
+    if (!user?.PasswordResetToken || !user.PasswordResetExpiresAt)
+      throw new AppError(400, AUTH_MESSAGE.RESET.INVALID_TOKEN);
 
-      if (user.PasswordResetExpiresAt < new Date())
-        throw new AppError(400, AUTH_MESSAGE.RESET.TOKEN_EXPIRED);
+    if (user.PasswordResetExpiresAt < new Date())
+      throw new AppError(400, AUTH_MESSAGE.RESET.TOKEN_EXPIRED);
 
-      const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-      await prisma.users.update({
-        where: { Id: user.Id },
-        data: {
-          PasswordHash: passwordHash,
-          PasswordResetToken: null,
-          PasswordResetExpiresAt: null,
-        },
-      });
-    } catch (error) {
-      throw new AppError(500, (error as Error).message);
-    }
+    await prisma.users.update({
+      where: { Id: user.Id },
+      data: {
+        PasswordHash: passwordHash,
+        PasswordResetToken: null,
+        PasswordResetExpiresAt: null,
+      },
+    });
   },
 
   //set password - GG Login

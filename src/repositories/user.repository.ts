@@ -17,4 +17,18 @@ export const userRepositories = {
       select: GOAL_SELECT,
     });
   },
+
+  findUserById(userId: string) {
+    return prisma.users.findUnique({
+      where: { Id: userId },
+      select: { Id: true },
+    });
+  },
+
+  updateUserInformation(userId: string, data: Prisma.usersUpdateInput) {
+    return prisma.users.update({
+      where: { Id: userId },
+      data: data,
+    });
+  },
 };

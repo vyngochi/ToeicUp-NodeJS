@@ -1,5 +1,4 @@
 import { config } from "../config/index";
-import { redis } from "../config/redis";
 import { blacklistToken } from "../libs/redisHelper";
 import { errorResponse } from "../libs/responseHelper";
 import { NextFunction, Request, Response } from "express";
@@ -28,7 +27,7 @@ export const authenticate = async (
 
   try {
     const payload = jwt.verify(token, config.jwt.secret) as {
-      id: string;
+      userId: string;
       email: string;
       role: string;
       jti: string;
@@ -40,7 +39,11 @@ export const authenticate = async (
       return errorResponse(res, 401, "Token revoked");
     }
 
-    req.user = { userId: payload.id, email: payload.email, role: payload.role };
+    req.user = {
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+    };
 
     next();
   } catch (error) {

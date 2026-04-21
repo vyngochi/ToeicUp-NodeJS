@@ -53,7 +53,7 @@ export const tokenService = {
           RevokedReason: TOKEN_ROTATE_ENUM.REVOKED,
         },
       });
-      throw new Error(TOKEN_ROTATE_ENUM.REUSED);
+      throw new Error(TOKEN_ROTATE_ENUM.REVOKED);
     }
 
     if (record.ExpiresAt < new Date()) {
@@ -88,11 +88,15 @@ export const tokenService = {
       user: {
         Id: record.users.Id,
         Email: record.users.Email,
+        FirstName: record.users.FirstName,
+        LastName: record.users.LastName,
         DisplayName: record.users.DisplayName,
         TargetScore: record.users.TargetScore,
         Streak: record.users.Streak,
         AvatarUrl: record.users.AvatarUrl,
         WordsPerDay: record.users.WordsPerDay,
+        Role: record.users.Role,
+        Bio: record.users.Bio,
       },
     };
   },

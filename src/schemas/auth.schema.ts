@@ -23,6 +23,9 @@ export const authSchema = {
         .number()
         .min(450, "Điểm mục tiêu phải lớn hơn hoặc bằng 450")
         .max(990, "điểm mục tiêu phải nhỏ hơn hoặc bằng 990"),
+      wordsPerDay: z
+        .number()
+        .min(5, "Vui lòng chọn số từ vựng học mỗi ngày lớn hơn 5"),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: "Mật khẩu không khớp",
