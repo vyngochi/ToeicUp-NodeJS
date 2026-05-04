@@ -3,6 +3,9 @@ import { Prisma } from "../generated/prisma/client";
 import { USER_RESPONSE } from "../models";
 
 export const authRepositories = {
+  findUserByUserId(userId: string) {
+    return prisma.users.findUnique({ where: { Id: userId } });
+  },
   findUserByEmail(email: string) {
     return prisma.users.findUnique({
       where: { Email: email },
@@ -34,5 +37,12 @@ export const authRepositories = {
 
   updateUser(userId: string, data: Prisma.usersUpdateInput) {
     return prisma.users.update({ where: { Id: userId }, data: data });
+  },
+
+  updatePassword(userId: string, passwordHash: string) {
+    return prisma.users.update({
+      where: { Id: userId },
+      data: { PasswordHash: passwordHash, UpdatedAt: new Date() },
+    });
   },
 };

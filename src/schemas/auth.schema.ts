@@ -74,4 +74,20 @@ export const authSchema = {
       message: "Mật khẩu không khớp",
       path: ["confirmPassword"],
     }),
+  setPasswordMeSchema: z
+    .object({
+      newPassword: z
+        .string()
+        .min(8, "Mật khẩu tối thiểu 8 ký tự")
+        .max(30, "Mật khẩu tối đa 30 ký tự")
+        .regex(/[a-z]/, "Phải có ít nhất 1 chữ thường")
+        .regex(/[A-Z]/, "Phải có ít nhất 1 chữ hoa")
+        .regex(/\d/, "Phải có ít nhất 1 số")
+        .regex(/[\W_]/, "Phải có ít nhất 1 ký tự đặc biệt"),
+      confirmPassword: z.string().min(1, "Vui lòng nhập mật khẩu xác nhận"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Mật khẩu không khớp",
+      path: ["confirmPassword"],
+    }),
 };

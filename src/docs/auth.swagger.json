@@ -210,6 +210,36 @@
           }
         }
       }
+    },
+    "/api/auth/set-password/me": {
+      "post": {
+        "summary": "Đặt lại mật khẩu của tôi",
+        "description": "Đặt lại mật khẩu của người dùng hiện tại (yêu cầu xác thực)",
+        "tags": ["Auth"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordMeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SetPasswordSuccess"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
     }
   },
 
@@ -344,6 +374,24 @@
             "type": "string",
             "example": "reset-token-abc123"
           },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Abc123@",
+            "description": "Mật khẩu mới (phải chứa chữ hoa, chữ thường, số và ký tự đặc biệt)"
+          },
+          "confirmPassword": {
+            "type": "string",
+            "minLength": 8,
+            "example": "Abc123@",
+            "description": "Xác nhận mật khẩu"
+          }
+        }
+      },
+      "SetPasswordMeRequest": {
+        "type": "object",
+        "required": ["newPassword", "confirmPassword"],
+        "properties": {
           "newPassword": {
             "type": "string",
             "minLength": 8,

@@ -13,6 +13,7 @@ import {
   forgotPasswordController,
   resetPasswordForgotController,
 } from "../controllers/auth";
+import { setPasswordMeController } from "../controllers/auth/set-password-me.controller";
 
 const router = Router();
 
@@ -47,6 +48,12 @@ router.post(
   "/set-password",
   validate(authSchema.setPasswordSchema),
   setPasswordController,
+);
+router.put(
+  "/set-password/me",
+  authenticate,
+  validate(authSchema.setPasswordMeSchema),
+  setPasswordMeController,
 );
 router.post("/logout", authenticate, logoutController);
 

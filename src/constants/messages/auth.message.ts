@@ -45,4 +45,13 @@ export const AUTH_MESSAGE = {
     SUCCESS: "Mật khẩu được thêm thành công",
     MAIL: "Tài khoản được đăng ký bằng Google, chúng tôi đã gửi email đặt mật khẩu cho tài khoản của bạn",
   },
+
+  SET_PASSWORD_ME: {
+    NOT_USER: "Không tìm thấy người dùng, vui lòng đăng xuất và đăng nhập lại",
+    SUCCESS(isPassword: boolean) {
+      return isPassword
+        ? "Cập nhật mật khẩu thành công"
+        : "Thêm mật khẩu thành công";
+    },
+  },
 };

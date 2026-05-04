@@ -440,4 +440,24 @@ export const authService = {
       user: userRes,
     };
   },
+
+  //set password - me
+  async setPasswordMe(userId: string, password: string) {
+    let user = await authRepositories.findUserByUserId(userId);
+
+    if (!user) {
+      throw new AppError(
+        HttpStatus.NOT_FOUND,
+        AUTH_MESSAGE.SET_PASSWORD_ME.NOT_USER,
+      );
+    }
+
+    const isPassword = !!user.PasswordHash;
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await authRepositories.updatePassword(userId, passwordHash);
+
+    return { message: AUTH_MESSAGE.SET_PASSWORD_ME.SUCCESS(isPassword) };
+  },
 };
