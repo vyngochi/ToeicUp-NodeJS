@@ -1,0 +1,343 @@
+{
+  "paths": {
+    "/api/admin/words": {
+      "post": {
+        "summary": "Thêm từ vựng mới",
+        "tags": ["Admin"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddWordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/admin/words/bulk": {
+      "post": {
+        "summary": "Thêm nhiều từ vựng cùng lúc",
+        "tags": ["Admin"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBulkWordsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddBulkWordsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddWordRequest": {
+        "type": "object",
+        "required": ["term", "definitions"],
+        "properties": {
+          "term": {
+            "type": "string",
+            "example": "acquire"
+          },
+          "phonetic": {
+            "type": "string",
+            "example": "/əˈkwaɪər/"
+          },
+          "audioUrl": {
+            "type": "string",
+            "example": "https://example.com/audio.mp3"
+          },
+          "topic": {
+            "type": "string",
+            "example": "Business"
+          },
+          "level": {
+            "type": "integer",
+            "example": 1
+          },
+          "wordForm": {
+            "type": "string",
+            "example": "verb"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DefinitionInput"
+            }
+          },
+          "wordSetIds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/wordSetId"
+            }
+          }
+        }
+      },
+      "DefinitionInput": {
+        "type": "object",
+        "required": ["definitionEn", "definitionVi"],
+        "properties": {
+          "definitionEn": {
+            "type": "string",
+            "example": "to buy or obtain something"
+          },
+          "definitionVi": {
+            "type": "string",
+            "example": "mua hoặc có được cái gì đó"
+          },
+          "exampleEn": {
+            "type": "string",
+            "example": "The company acquired a new building."
+          },
+          "exampleVi": {
+            "type": "string",
+            "example": "Công ty đã mua một tòa nhà mới."
+          },
+          "tips": {
+            "type": "string",
+            "example": "Remember the stress on the second syllable"
+          },
+          "partOfSpeech": {
+            "type": "string",
+            "example": "verb"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "wordSetId": {
+        "type": "array",
+        "example": "[57388f3d-9b6a-4331-8b61-4ec994f54a6c]"
+      },
+      "AddBulkWordsRequest": {
+        "type": "object",
+        "required": ["words"],
+        "properties": {
+          "words": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddWordRequest"
+            }
+          }
+        }
+      },
+      "AddWordResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Thêm từ vựng thành công"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Word"
+          }
+        }
+      },
+      "AddBulkWordsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Thêm nhiều từ vựng thành công"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "added": {
+                "type": "integer",
+                "example": 10
+              },
+              "skipped": {
+                "type": "integer",
+                "example": 2
+              },
+              "words": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Word"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Word": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid"
+          },
+          "term": {
+            "type": "string",
+            "example": "acquire"
+          },
+          "phonetic": {
+            "type": "string",
+            "example": "/əˈkwaɪər/"
+          },
+          "audioUrl": {
+            "type": "string",
+            "example": "https://example.com/audio.mp3"
+          },
+          "topic": {
+            "type": "string",
+            "example": "Business"
+          },
+          "level": {
+            "type": "integer",
+            "example": 1
+          },
+          "wordForm": {
+            "type": "string",
+            "example": "verb"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2023-01-01T00:00:00.000Z"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation error"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

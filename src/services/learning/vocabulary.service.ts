@@ -1,6 +1,9 @@
 import { prisma } from "../../config/prisma";
+import { HttpStatus } from "../../constants/enums/status-code";
 import { VOCABULARY_MESSAGE } from "../../constants/messages/vocab.message";
 import { pagination } from "../../libs/paginationHelper";
+import { AppError } from "../../middlewares/error-handler";
+import { VocabularyRepository } from "../../repositories/vocabulary.repository";
 
 export const VocabularyServices = {
   //get word set
@@ -32,6 +35,9 @@ export const VocabularyServices = {
               thumbnail: true,
             },
           },
+          created_at: true,
+          updated_at: true,
+          isActive: true,
         },
       }),
 
@@ -41,10 +47,14 @@ export const VocabularyServices = {
     if (wordSets.length === 0)
       return { message: VOCABULARY_MESSAGE.NOT_WORD_SETS };
 
+    const wordSetResponse = wordSets.filter(
+      (word_set) => word_set.isActive === true,
+    );
+
     return {
       message: VOCABULARY_MESSAGE.GET_SUCCESS,
       data: {
-        wordSets,
+        wordSets: wordSetResponse,
         total,
         page,
         limit,
@@ -103,6 +113,44 @@ export const VocabularyServices = {
         limit,
         totalPages: Math.ceil(total / pageSize),
       },
+    };
+  },
+
+  async getListVocabByWordSetIdForLeaner(
+    wordSetId: string,
+    pageSize: number,
+    pageIndex: number,
+  ) {
+    console.log(pageSize);
+
+    const { limit, page, skipValues } = pagination(pageSize, pageIndex);
+    if (wordSetId === null) {
+      throw new AppError(
+        HttpStatus.NOT_FOUND,
+        VOCABULARY_MESSAGE.GET_VOCAB.NO_WORD_SET_ID,
+      );
+    }
+
+    console.log(limit);
+
+    const [data, total] = await Promise.all([
+      VocabularyRepository.getVocabsByWordSetIdForLearner(
+        wordSetId,
+        limit,
+        skipValues,
+      ),
+      VocabularyRepository.countVocabsByWordSetId(wordSetId),
+    ]);
+
+    return {
+      message: VOCABULARY_MESSAGE.GET_VOCAB.RESPONSE.SUCCESS,
+      data: {
+        vocabs: data,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / pageSize) || 0,
+      }
     };
   },
 };

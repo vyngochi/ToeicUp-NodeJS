@@ -1,6 +1,8 @@
 import { JsonObject } from "@prisma/client/runtime/client";
 import AuthSwagger from "./auth.swagger.json";
 import UserSwagger from "./user.swagger.json";
+import LearningSwagger from "./learning.swagger.json";
+import AdminSwagger from "./admin.swagger.json";
 
 // Gộp tất cả thành 1 Object duy nhất
 export const SwaggerDocument: JsonObject = {
@@ -23,16 +25,22 @@ export const SwaggerDocument: JsonObject = {
   paths: {
     ...AuthSwagger.paths,
     ...UserSwagger.paths,
+    ...LearningSwagger.paths,
+    ...AdminSwagger.paths,
   },
   // Gộp các schemas (nếu có)
   components: {
     schemas: {
       ...AuthSwagger.components?.schemas,
       ...UserSwagger.components?.schemas,
+      ...LearningSwagger.components?.schemas,
+      ...AdminSwagger.components?.schemas,
     },
     responses: {
       ...AuthSwagger.components.responses,
       ...UserSwagger.components?.responses,
+      ...LearningSwagger.components?.responses,
+      ...AdminSwagger.components?.responses,
     },
     securitySchemes: {
       bearerAuth: {

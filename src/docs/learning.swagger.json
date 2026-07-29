@@ -1,0 +1,332 @@
+{
+  "paths": {
+    "/api/learning/word-sets": {
+      "get": {
+        "summary": "Lấy danh sách word sets",
+        "tags": ["Learning"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "searchKey",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Từ khóa tìm kiếm"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Số lượng item mỗi trang"
+          },
+          {
+            "name": "pageIndex",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Trang hiện tại"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WordSetsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/learning/vocabulary/{wordSetId}": {
+      "get": {
+        "summary": "Lấy danh sách từ vựng theo word set",
+        "tags": ["Learning"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "wordSetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID của word set"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VocabularyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "WordSetsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Lấy danh sách word sets thành công"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "wordSets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WordSet"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/Pagination"
+              }
+            }
+          }
+        }
+      },
+      "VocabularyResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Lấy danh sách từ vựng thành công"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VocabularyItem"
+            }
+          }
+        }
+      },
+      "WordSet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Business Vocabulary"
+          },
+          "description": {
+            "type": "string",
+            "example": "Từ vựng kinh doanh"
+          },
+          "level": {
+            "type": "integer",
+            "example": 1
+          },
+          "total_words": {
+            "type": "integer",
+            "example": 50
+          },
+          "thumbnail": {
+            "type": "string",
+            "example": "url"
+          },
+          "topic": {
+            "$ref": "#/components/schemas/Topic"
+          }
+        }
+      },
+      "Topic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Business"
+          },
+          "description": {
+            "type": "string",
+            "example": "Chủ đề kinh doanh"
+          },
+          "thumbnail": {
+            "type": "string",
+            "example": "url"
+          }
+        }
+      },
+      "VocabularyItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid"
+          },
+          "term": {
+            "type": "string",
+            "example": "acquire"
+          },
+          "phonetic": {
+            "type": "string",
+            "example": "/əˈkwaɪər/"
+          },
+          "audioUrl": {
+            "type": "string",
+            "example": "url"
+          },
+          "topic": {
+            "type": "string",
+            "example": "Business"
+          },
+          "level": {
+            "type": "integer",
+            "example": 1
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Definition"
+            }
+          }
+        }
+      },
+      "Definition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid"
+          },
+          "definitionEn": {
+            "type": "string",
+            "example": "to buy or obtain something"
+          },
+          "definitionVi": {
+            "type": "string",
+            "example": "mua hoặc có được cái gì đó"
+          },
+          "exampleEn": {
+            "type": "string",
+            "example": "The company acquired a new building."
+          },
+          "exampleVi": {
+            "type": "string",
+            "example": "Công ty đã mua một tòa nhà mới."
+          },
+          "tips": {
+            "type": "string",
+            "example": "Remember the stress on the second syllable"
+          },
+          "partOfSpeech": {
+            "type": "string",
+            "example": "verb"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "pageIndex": {
+            "type": "integer",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalPages": {
+            "type": "integer",
+            "example": 5
+          },
+          "totalItems": {
+            "type": "integer",
+            "example": 50
+          }
+        }
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -8,18 +8,14 @@ import { UploadAvatarController } from "../controllers/user/uploadAvatar.control
 
 const router = Router();
 
-router.put(
-  "/set-goal",
-  validate(userSchemas.setGoalSchema),
-  authenticate,
-  setGoalController,
-);
+router.use(authenticate);
+
+router.put("/set-goal", validate(userSchemas.setGoalSchema), setGoalController);
 router.put(
   "/update-information",
   validate(userSchemas.userUpdateInformationSchema),
-  authenticate,
   UpdateUserInfoController,
 );
-router.put("/upload-avatar", authenticate, UploadAvatarController);
+router.put("/upload-avatar", UploadAvatarController);
 
 export default router;

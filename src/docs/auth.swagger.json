@@ -249,8 +249,8 @@
         "type": "object",
         "required": ["email", "password"],
         "properties": {
-          "email": { "type": "string" },
-          "password": { "type": "string" }
+          "email": { "type": "string", "example": "ncv.***@gmail.com" },
+          "password": { "type": "string", "example": "Toeicup2026$" }
         }
       },
       "GoogleLoginRequest": {
