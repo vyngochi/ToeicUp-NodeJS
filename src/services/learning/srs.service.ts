@@ -63,7 +63,36 @@ export const SRSServices = {
       },
     });
 
+    // Handle Streak Calculation
+    const user = await prisma.users.findUnique({
+      where: { Id: userId },
+      select: { LastStudyDate: true, Streak: true }
+    });
+
     const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let newStreak = user?.Streak || 0;
+
+    if (user?.LastStudyDate) {
+      const lastStudy = new Date(user.LastStudyDate);
+      lastStudy.setHours(0, 0, 0, 0);
+
+      if (lastStudy.getTime() === yesterday.getTime()) {
+        newStreak += 1;
+      } else if (lastStudy.getTime() < yesterday.getTime()) {
+        newStreak = 1;
+      }
+      // if today, it stays the same
+    } else {
+      newStreak = 1;
+    }
+
+
     
     let currentRepetitions = 0;
     let currentInterval = 1;
@@ -121,6 +150,15 @@ export const SRSServices = {
         LastSeenAt: now,
         CreatedAt: now,
       },
+    });
+
+    // Update user streak and last study date
+    await prisma.users.update({
+      where: { Id: userId },
+      data: {
+        Streak: newStreak,
+        LastStudyDate: now
+      }
     });
 
     // Optionally update study_sessions or wordsReviewed count here
@@ -260,7 +298,6 @@ export const SRSServices = {
       accuracy = Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100);
     }
 
-    // 4. streak
     const user = await prisma.users.findUnique({
       where: {
         Id: userId,
@@ -270,11 +307,55 @@ export const SRSServices = {
       },
     });
 
+    // 5. Monthly and Yearly aggregation
+    const userProgressDates = await prisma.user_word_progresses.findMany({
+      where: { UserId: userId },
+      select: { CreatedAt: true },
+    });
+
+    const currentYear = new Date().getFullYear();
+    const months = ['Th 1', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7', 'Th 8', 'Th 9', 'Th 10', 'Th 11', 'Th 12'];
+    
+    const monthlyDataMap: Record<number, number> = {};
+    for (let i = 0; i < 12; i++) {
+      monthlyDataMap[i] = 0;
+    }
+
+    const yearlyDataMap: Record<number, number> = {};
+    for (let i = 0; i < 5; i++) {
+      yearlyDataMap[currentYear - 4 + i] = 0;
+    }
+
+    userProgressDates.forEach((p) => {
+      const year = p.CreatedAt.getFullYear();
+      const month = p.CreatedAt.getMonth();
+
+      if (year === currentYear) {
+        monthlyDataMap[month]++;
+      }
+      
+      if (year >= currentYear - 4 && year <= currentYear) {
+        yearlyDataMap[year]++;
+      }
+    });
+
+    const monthlyData = Object.keys(monthlyDataMap).map((m) => ({
+      name: months[parseInt(m)],
+      learned: monthlyDataMap[parseInt(m)]
+    }));
+
+    const yearlyData = Object.keys(yearlyDataMap).map((y) => ({
+      name: y.toString(),
+      learned: yearlyDataMap[parseInt(y)]
+    }));
+
     return {
       dueToday,
       accuracy,
       totalLearned,
       streak: user?.Streak || 0,
+      monthlyData,
+      yearlyData,
     };
   },
 };

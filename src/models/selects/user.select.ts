@@ -1,5 +1,3 @@
-import { Prisma } from "../../generated/prisma/client";
-
 export const USER_RESPONSE = {
   Id: true,
   Email: true,
@@ -14,6 +12,7 @@ export const USER_RESPONSE = {
   Role: true,
   IsActive: true,
   IsLoginExternal: true,
+  LastStudyDate: true,
 } as const;
 
 export const GOAL_SELECT = {

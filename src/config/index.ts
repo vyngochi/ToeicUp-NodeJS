@@ -20,6 +20,10 @@ export const config = {
   mail: {
     API_KEY: process.env.MAIL_API_KEY!,
     USER: process.env.USER,
+    SMTP_HOST: process.env.SMTP_HOST || "smtp.mailersend.net",
+    SMTP_PORT: Number(process.env.SMTP_PORT) || 587,
+    SMTP_USERNAME: process.env.SMTP_USERNAME,
+    SMTP_PASSWORD: process.env.SMTP_PASSWORD,
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID!,

@@ -2,26 +2,17 @@ import { config } from "../../config";
 import { prisma } from "../../config/prisma";
 import { AppError } from "../../middlewares/error-handler";
 import { tokenService } from "../auth/token.service";
-import {
-  EmailParams,
-  mailerSend,
-  Recipient,
-  Sender,
-} from "../../config/mailer";
+import { mailer } from "../../config/mailer";
 
 export const mailService = {
   async sendRegisterEmail(to: string, token: string) {
     const link = `${config.frontendUrl}/verify-email?token=${token}`;
 
-    const sendFrom = new Sender(config.mail.USER!, "Toeic Up");
-
-    const recipient = new Recipient(to);
-    const emailParams = new EmailParams()
-      .setFrom(sendFrom)
-      .setTo([recipient])
-      .setSubject("Xác nhận email đăng ký Toeic Up")
-      .setHtml(
-        `
+    const mailOptions = {
+      from: `"Toeic Up" <${config.mail.USER}>`,
+      to,
+      subject: "Xác nhận email đăng ký Toeic Up",
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
           
@@ -59,12 +50,13 @@ export const mailService = {
         </div>
       </div>
     `,
-      )
-      .setText(`Xác nhận email: ${link}`);
+      text: `Xác nhận email: ${link}`,
+    };
 
     try {
-      await mailerSend.email.send(emailParams);
-    } catch {
+      await mailer.sendMail(mailOptions);
+    } catch (err) {
+      console.error("Mail send error:", err);
       throw new AppError(
         400,
         "Lỗi server, không thể gửi mail. Vui lòng thử lại sau",
@@ -130,16 +122,11 @@ export const mailService = {
   async sendForgotPasswordEmail(to: string, token: string) {
     const link = `${config.frontendUrl}/reset-password?token=${token}`;
 
-    const sentFrom = new Sender(config.mail.USER!, "Toeic Up");
-
-    const recipients = [new Recipient(to)];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject("Đặt lại mật khẩu mới")
-      .setHtml(
-        `
+    const mailOptions = {
+      from: `"Toeic Up" <${config.mail.USER}>`,
+      to,
+      subject: "Đặt lại mật khẩu mới",
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
           
@@ -171,15 +158,16 @@ export const mailService = {
         </div>
       </div>
     `,
-      )
-      .setText(`Đổi mật khẩu tại: ${link}`);
+      text: `Đổi mật khẩu tại: ${link}`,
+    };
 
     try {
-      await mailerSend.email.send(emailParams);
+      await mailer.sendMail(mailOptions);
       return {
         message: "Vui lòng kiểm tra hộp thư của bạn để đổi mật khẩu",
       };
-    } catch (error) {
+    } catch (err) {
+      console.error("Mail send error:", err);
       throw new AppError(
         400,
         "Lỗi server, không thể gửi mail. Vui lòng thử lại sau",
@@ -190,17 +178,11 @@ export const mailService = {
   async sendRemindVerifyEmail(to: string, token: string) {
     const link = `${config.frontendUrl}/verify-email?token=${token}`;
 
-    const sentFrom = new Sender(config.mail.USER!, "Toeic Up");
-
-    const recipients = [new Recipient(to)];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject("Xác nhận email đăng ký Toeic Up")
-
-      .setHtml(
-        `
+    const mailOptions = {
+      from: `"Toeic Up" <${config.mail.USER}>`,
+      to,
+      subject: "Xác nhận email đăng ký Toeic Up",
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
           
@@ -238,12 +220,13 @@ export const mailService = {
         </div>
       </div>
     `,
-      )
-      .setText(`Xác nhận email tại: ${link}`);
+      text: `Xác nhận email tại: ${link}`,
+    };
 
     try {
-      await mailerSend.email.send(emailParams);
-    } catch (error) {
+      await mailer.sendMail(mailOptions);
+    } catch (err) {
+      console.error("Mail send error:", err);
       throw new AppError(
         400,
         "Lỗi server, không thể gửi mail. Vui lòng thử lại sau",
@@ -254,17 +237,11 @@ export const mailService = {
   async sendSettingPasswordGGLogin(to: string, token: string) {
     const link = `${config.frontendUrl}/set-password?token=${token}`;
 
-    const sentFrom = new Sender(config.mail.USER!, "Toeic Up");
-
-    const recipients = [new Recipient(to)];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setSubject("Đặt mật khẩu cho phương thức đăng nhập thủ công")
-
-      .setHtml(
-        `
+    const mailOptions = {
+      from: `"Toeic Up" <${config.mail.USER}>`,
+      to,
+      subject: "Đặt mật khẩu cho phương thức đăng nhập thủ công",
+      html: `
       <div style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
         <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
           
@@ -296,12 +273,13 @@ export const mailService = {
         </div>
       </div>
     `,
-      )
-      .setText(`Xác nhận email tại: ${link}`);
+      text: `Xác nhận email tại: ${link}`,
+    };
 
     try {
-      await mailerSend.email.send(emailParams);
+      await mailer.sendMail(mailOptions);
     } catch (err) {
+      console.error("Mail send error:", err);
       throw new AppError(
         400,
         `Lỗi server, không thể gửi mail đặt password. Vui lòng thử lại sau hoặc đăng nhập bằng Google`,

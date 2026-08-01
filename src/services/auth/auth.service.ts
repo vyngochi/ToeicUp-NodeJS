@@ -155,6 +155,7 @@ export const authService = {
         WordsPerDay: user.WordsPerDay,
         Role: user.Role,
         Bio: user.Bio,
+        LastStudyDate: user.LastStudyDate,
       },
     };
   },

@@ -97,6 +97,7 @@ export const tokenService = {
         WordsPerDay: record.users.WordsPerDay,
         Role: record.users.Role,
         Bio: record.users.Bio,
+        LastStudyDate: record.users.LastStudyDate,
       },
     };
   },

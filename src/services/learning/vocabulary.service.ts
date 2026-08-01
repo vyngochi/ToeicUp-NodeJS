@@ -116,6 +116,117 @@ export const VocabularyServices = {
     };
   },
 
+  async getDashboardWordSets(userId: string) {
+    const dueTodayWords = await prisma.user_word_progresses.findMany({
+      where: {
+        UserId: userId,
+        NextReviewAt: { lte: new Date() },
+      },
+      select: { WordId: true },
+    });
+    
+    const dueWordIds = dueTodayWords.map((w) => w.WordId);
+
+    const dueTodayTopics = await prisma.topics.findMany({
+      where: {
+        word_sets: {
+          some: {
+            word_set_words: {
+              some: {
+                word_id: { in: dueWordIds },
+              },
+            },
+            isActive: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        thumbnail: true,
+        total_words: true,
+        word_sets: {
+          where: {
+            word_set_words: {
+              some: {
+                word_id: { in: dueWordIds },
+              },
+            },
+            isActive: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            level: true,
+            total_words: true,
+            thumbnail: true,
+          },
+        },
+      },
+    });
+
+    const recentWords = await prisma.user_word_progresses.findMany({
+      where: {
+        UserId: userId,
+        LastSeenAt: { not: null },
+      },
+      orderBy: { LastSeenAt: "desc" },
+      take: 100,
+      select: { WordId: true },
+    });
+    const recentWordIds = recentWords.map((w) => w.WordId);
+
+    const recentlyLearnedTopics = await prisma.topics.findMany({
+      where: {
+        word_sets: {
+          some: {
+            word_set_words: {
+              some: {
+                word_id: { in: recentWordIds },
+              },
+            },
+            isActive: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        thumbnail: true,
+        total_words: true,
+        word_sets: {
+          where: {
+            word_set_words: {
+              some: {
+                word_id: { in: recentWordIds },
+              },
+            },
+            isActive: true,
+          },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            level: true,
+            total_words: true,
+            thumbnail: true,
+          },
+        },
+      },
+    });
+
+    return {
+      message: "Get dashboard word sets successfully",
+      data: {
+        dueTodayTopics,
+        recentlyLearnedTopics,
+      },
+    };
+  },
+
   async getListVocabByWordSetIdForLeaner(
     wordSetId: string,
     pageSize: number,
