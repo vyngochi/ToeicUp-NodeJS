@@ -1,5 +1,8 @@
 import nodemailer from "nodemailer";
 import { config } from ".";
+import dns from "node:dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 export const mailer = nodemailer.createTransport({
   host: config.mail.SMTP_HOST,
