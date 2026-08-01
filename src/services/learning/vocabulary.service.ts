@@ -67,6 +67,7 @@ export const VocabularyServices = {
     searchKey: string,
     pageSize: number,
     pageIndex: number,
+    userId?: string,
   ) {
     const { limit, page, skipValues } = pagination(pageSize, pageIndex);
 
@@ -74,7 +75,7 @@ export const VocabularyServices = {
       ? { name: { contains: searchKey, mode: "insensitive" as const } }
       : {};
 
-    const [topics, total] = await Promise.all([
+    const [topicsRaw, total] = await Promise.all([
       prisma.topics.findMany({
         // where: whereCondition,
         skip: skipValues,
@@ -92,7 +93,25 @@ export const VocabularyServices = {
               name: true,
               description: true,
               level: true,
+              thumbnail: true,
               total_words: true,
+              ...(userId
+                ? {
+                    _count: {
+                      select: {
+                        word_set_words: {
+                          where: {
+                            words: {
+                              user_word_progresses: {
+                                some: { UserId: userId },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  }
+                : {}),
             },
           },
         },
@@ -101,8 +120,20 @@ export const VocabularyServices = {
       prisma.word_sets.count({ where: whereCondition }),
     ]);
 
-    if (topics.length === 0)
+    if (topicsRaw.length === 0)
       return { message: VOCABULARY_MESSAGE.NOT_WORD_SETS };
+
+    // Format output to map _count.word_set_words to learned_words
+    const topics = topicsRaw.map((topic) => ({
+      ...topic,
+      word_sets: topic.word_sets.map((ws: any) => {
+        const { _count, ...rest } = ws;
+        return {
+          ...rest,
+          learned_words: _count ? _count.word_set_words : undefined,
+        };
+      }),
+    }));
 
     return {
       message: VOCABULARY_MESSAGE.GET_SUCCESS,
@@ -124,10 +155,10 @@ export const VocabularyServices = {
       },
       select: { WordId: true },
     });
-    
+
     const dueWordIds = dueTodayWords.map((w) => w.WordId);
 
-    const dueTodayTopics = await prisma.topics.findMany({
+    const dueTodayTopicsRaw = await prisma.topics.findMany({
       where: {
         word_sets: {
           some: {
@@ -162,6 +193,19 @@ export const VocabularyServices = {
             level: true,
             total_words: true,
             thumbnail: true,
+            _count: {
+              select: {
+                word_set_words: {
+                  where: {
+                    words: {
+                      user_word_progresses: {
+                        some: { UserId: userId },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -178,7 +222,7 @@ export const VocabularyServices = {
     });
     const recentWordIds = recentWords.map((w) => w.WordId);
 
-    const recentlyLearnedTopics = await prisma.topics.findMany({
+    const recentlyLearnedTopicsRaw = await prisma.topics.findMany({
       where: {
         word_sets: {
           some: {
@@ -213,16 +257,41 @@ export const VocabularyServices = {
             level: true,
             total_words: true,
             thumbnail: true,
+            _count: {
+              select: {
+                word_set_words: {
+                  where: {
+                    words: {
+                      user_word_progresses: {
+                        some: { UserId: userId },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
 
+    const formatTopics = (topicsRaw: any[]) =>
+      topicsRaw.map((topic) => ({
+        ...topic,
+        word_sets: topic.word_sets.map((ws: any) => {
+          const { _count, ...rest } = ws;
+          return {
+            ...rest,
+            learned_words: _count ? _count.word_set_words : undefined,
+          };
+        }),
+      }));
+
     return {
-      message: "Get dashboard word sets successfully",
+      message: VOCABULARY_MESSAGE.GET_SUCCESS,
       data: {
-        dueTodayTopics,
-        recentlyLearnedTopics,
+        dueTodayTopics: formatTopics(dueTodayTopicsRaw),
+        recentlyLearnedTopics: formatTopics(recentlyLearnedTopicsRaw),
       },
     };
   },
@@ -261,7 +330,7 @@ export const VocabularyServices = {
         page,
         limit,
         totalPages: Math.ceil(total / pageSize) || 0,
-      }
+      },
     };
   },
 };

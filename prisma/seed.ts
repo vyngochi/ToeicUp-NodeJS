@@ -349,6 +349,52 @@ const RAW_TOPICS: RawTopic[] = [
       },
     ],
   },
+  // ═══════════════════════════════════════════
+  // TOPIC 7: MANUFACTURING & QUALITY
+  // ═══════════════════════════════════════════
+  {
+    name: "Manufacturing & Quality",
+    description: "Vocabulary for factory production, machinery, and quality control",
+    thumbnail: "https://cdn.example.com/topics/manufacturing.jpg",
+    order: 7,
+    wordSets: [
+      {
+        name: "Factory & Production",
+        description: "Plant operations and assembly line terms",
+        level: 2,
+        words: [
+          "assembly",
+          "defect",
+          "machinery",
+          "maintenance",
+          "warehouse",
+        ],
+      },
+    ],
+  },
+  // ═══════════════════════════════════════════
+  // TOPIC 8: HEALTHCARE & MEDICAL
+  // ═══════════════════════════════════════════
+  {
+    name: "Healthcare & Medical",
+    description: "Vocabulary for medical visits, prescriptions, and health policy",
+    thumbnail: "https://cdn.example.com/topics/healthcare.jpg",
+    order: 8,
+    wordSets: [
+      {
+        name: "Medical Appointments",
+        description: "Terms used in clinics and hospital consultations",
+        level: 1,
+        words: [
+          "prescription",
+          "consultation",
+          "physician",
+          "diagnosis",
+          "symptom",
+        ],
+      },
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────
@@ -2895,6 +2941,178 @@ const WORD_DICT: Record<string, RawWord> = {
         definitionVi: "Đăng ký trả phí định kỳ; gói thuê bao",
         exampleEn: "The software is available on an annual subscription basis.",
         exampleVi: "Phần mềm có sẵn theo gói đăng ký hàng năm.",
+        sortOrder: 0,
+      },
+    ],
+  },
+
+  // ── MANUFACTURING & HEALTHCARE ──────────────
+  assembly: {
+    term: "assembly",
+    phonetic: "/əˈsɛmbli/",
+    topic: "Manufacturing & Quality",
+    level: 2,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "The action of fitting together the component parts of a machine or other object",
+        definitionVi: "Sự lắp ráp; dây chuyền lắp ráp",
+        exampleEn: "The car parts are put together on an assembly line.",
+        exampleVi: "Các bộ phận xe hơi được lắp ráp trên dây chuyền lắp ráp.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  defect: {
+    term: "defect",
+    phonetic: "/ˈdiːfɛkt/",
+    topic: "Manufacturing & Quality",
+    level: 2,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "A shortcoming, imperfection, or lack that spoils the quality",
+        definitionVi: "Khuyết tật; lỗi kỹ thuật",
+        exampleEn: "The product was recalled due to a manufacturing defect.",
+        exampleVi: "Sản phẩm bị thu hồi do lỗi sản xuất.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  machinery: {
+    term: "machinery",
+    phonetic: "/məˈʃiːnəri/",
+    topic: "Manufacturing & Quality",
+    level: 2,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "Machines collectively, or the components of a machine",
+        definitionVi: "Máy móc, thiết bị",
+        exampleEn: "Heavy machinery is required for building construction.",
+        exampleVi: "Cần có máy móc hạng nặng cho việc xây dựng công trình.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  maintenance: {
+    term: "maintenance",
+    phonetic: "/ˈmeɪntənəns/",
+    topic: "Manufacturing & Quality",
+    level: 2,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "The process of maintaining or preserving someone or something",
+        definitionVi: "Sự bảo trì; việc bảo dưỡng",
+        exampleEn: "Regular maintenance extends the lifespan of equipment.",
+        exampleVi: "Bảo trì định kỳ giúp kéo dài tuổi thọ thiết bị.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  warehouse: {
+    term: "warehouse",
+    phonetic: "/ˈwɛərhaʊs/",
+    topic: "Manufacturing & Quality",
+    level: 2,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "A large building where raw materials or manufactured goods may be stored",
+        definitionVi: "Nhà kho; kho chứa hàng",
+        exampleEn: "Goods are stored in the warehouse before distribution.",
+        exampleVi: "Hàng hóa được lưu trữ trong nhà kho trước khi phân phối.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  prescription: {
+    term: "prescription",
+    phonetic: "/prɪˈskrɪpʃən/",
+    topic: "Healthcare & Medical",
+    level: 1,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "An instruction written by a medical practitioner that authorizes a patient to be provided a medicine",
+        definitionVi: "Đơn thuốc; toa thuốc",
+        exampleEn: "You need a doctor's prescription to buy this medicine.",
+        exampleVi: "Bạn cần đơn thuốc của bác sĩ để mua loại thuốc này.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  consultation: {
+    term: "consultation",
+    phonetic: "/ˌkɒnsəlˈteɪʃən/",
+    topic: "Healthcare & Medical",
+    level: 1,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "A meeting with an expert or professional in order to seek advice",
+        definitionVi: "Sự tư vấn; buổi khám/tư vấn y khoa",
+        exampleEn: "Schedule a consultation with a specialist for further testing.",
+        exampleVi: "Hãy đặt lịch tư vấn với bác sĩ chuyên khoa để xét nghiệm thêm.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  physician: {
+    term: "physician",
+    phonetic: "/fɪˈzɪʃən/",
+    topic: "Healthcare & Medical",
+    level: 1,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "A person qualified to practice medicine, especially one who specializes in diagnosis and medical treatment",
+        definitionVi: "Bác sĩ điều trị",
+        exampleEn: "The physician examined the patient carefully.",
+        exampleVi: "Bác sĩ đã thăm khám cẩn thận cho bệnh nhân.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  diagnosis: {
+    term: "diagnosis",
+    phonetic: "/ˌdaɪəɡˈnəʊsɪs/",
+    topic: "Healthcare & Medical",
+    level: 1,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "The identification of the nature of an illness or other problem by examination of the symptoms",
+        definitionVi: "Sự chẩn đoán",
+        exampleEn: "Early diagnosis improves the chances of full recovery.",
+        exampleVi: "Chẩn đoán sớm giúp tăng cơ hội phục hồi hoàn toàn.",
+        sortOrder: 0,
+      },
+    ],
+  },
+  symptom: {
+    term: "symptom",
+    phonetic: "/ˈsɪmptəm/",
+    topic: "Healthcare & Medical",
+    level: 1,
+    wordForm: "noun",
+    definitions: [
+      {
+        partOfSpeech: "noun",
+        definitionEn: "A physical or mental feature which is regarded as indicating a condition of disease",
+        definitionVi: "Triệu chứng",
+        exampleEn: "Fever and fatigue are common symptoms of the flu.",
+        exampleVi: "Sốt và mệt mỏi là các triệu chứng phổ biến của bệnh cúm.",
         sortOrder: 0,
       },
     ],
